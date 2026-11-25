@@ -13,7 +13,10 @@
     <ProjectReference Include="..\XBar.Core\XBar.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="App.xaml" />
+    <Using Include="System.IO" />
+    <!-- WinForms is only used for the tray icon; keep its names out of the global scope -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
   </ItemGroup>
   <!-- Explorer-side DLL, built by src/XBar.Tap (copied if present) -->
   <ItemGroup>

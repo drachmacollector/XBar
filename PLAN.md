@@ -34,6 +34,25 @@ Working style: frequent small commits with simple messages.
 
 ---
 
+## M1 spike results (2026-11-26, build 26200, 1920×1080 @125 %)
+
+| Question | Result |
+|---|---|
+| Does Explorer fight `SPI_SETWORKAREA` with `SPIF_SENDCHANGE`? | **Yes**: reset within ~300 ms every time. The loop guard tripped after 31 corrections and paused XBar safely. |
+| Why? | Explorer recomputes the work area **when it receives the `WM_SETTINGCHANGE` broadcast**. Set *without* the broadcast, the value held for the whole test (no resets). |
+| Do maximised windows follow a silent change? | New maximises: yes (full 0–1080). Existing ones: no. Posting `WM_SETTINGCHANGE` to them does not refit them. **`SetWindowPos` to the new work area (keeping the invisible-border insets) refits them and they stay maximised.** |
+| Does sending the message to File Explorer / Progman windows trigger the reset? | Yes, so XBar notifies only windows **outside** Explorer's process. |
+| Is a maximised window with a 0 px gap treated as fullscreen (bar dropped below it)? | **No**: taskbar stayed topmost over a maximised Notepad. Default gap = 0. |
+| Fullscreen game detection | A borderless game (Spider-Man 2, `GameNxApp`, not zoomed, covers the monitor) was correctly detected and the bar hidden. |
+| Watchdog after `taskkill /f` of XBar | Restored work area and region in ~0.3 s; journal marked clean. |
+| Recovery on next launch (both processes killed) | Restored before starting the engine. |
+| Legacy `ReBarWindow32`/`MSTaskSwWClass` rects | Stale on 25H2. UI Automation gives exact app/tray bounds, so it is used instead. |
+
+**Decision:** approach A with the "silent set + notify non-Explorer windows + refit maximised" refinement.
+A+ (detour inside Explorer) is not needed. Restore uses the normal broadcast so Explorer takes ownership back.
+
+---
+
 ## 1. How the two reference apps work
 
 ### 1.1 RoundedTB (`reference/RoundedTB`)

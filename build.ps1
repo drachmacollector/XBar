@@ -9,7 +9,11 @@ $config = if ($Release) { 'Release' } else { 'Debug' }
 
 if (-not $SkipTap) {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-    $msbuild = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+    $msbuild = & $vswhere -latest -products * -find 'MSBuild\**\Bin\amd64\MSBuild.exe' | Select-Object -First 1
+    if (-not $msbuild) {
+        $msbuild = Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio", "$env:ProgramFiles\Microsoft Visual Studio" -Recurse -Filter MSBuild.exe -ErrorAction SilentlyContinue |
+            Where-Object FullName -like '*\Bin\amd64\*' | Select-Object -First 1 -ExpandProperty FullName
+    }
     if (-not $msbuild) { throw "MSBuild with the C++ tools was not found. Install VS Build Tools (Desktop C++ + Windows 11 SDK)." }
     Write-Host "== XBar.Tap ($config)" -ForegroundColor Cyan
     & $msbuild "$root\src\XBar.Tap\XBar.Tap.vcxproj" /p:Configuration=$config /p:Platform=x64 "/p:SolutionDir=$root\" /m /nologo /v:minimal

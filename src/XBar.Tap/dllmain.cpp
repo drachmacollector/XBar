@@ -7,6 +7,7 @@
 #include "common.h"
 #include <xamlOM.h>
 #include <shlwapi.h>
+#include <algorithm>
 #include <atomic>
 #include <cstdio>
 #include <thread>

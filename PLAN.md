@@ -51,6 +51,29 @@ Working style: frequent small commits with simple messages.
 **Decision:** approach A with the "silent set + notify non-Explorer windows + refit maximised" refinement.
 A+ (detour inside Explorer) is not needed. Restore uses the normal broadcast so Explorer takes ownership back.
 
+### Build status (2026-11-26)
+
+Verified live on this machine:
+- Overlay with no fighting; maximised apps run to the bottom edge.
+- Split apps + tray pills with anti-aliased corners and an outline, driven by the TAP.
+- Click-through outside the pills.
+- Hidden over a fullscreen game.
+- Materials: blur, clear + glow, acrylic + gradient, all applied live from settings.
+- Float height.
+- Peek hotkey, panic hotkey, pause/resume.
+- Safety: watchdog restore after `taskkill /f`, next-launch recovery, TAP self-restore when XBar dies, TAP version handover.
+- Control panel pages render (Home, Shape, Style). 16 unit tests pass.
+
+Not yet verified:
+- Explorer restart (TAP re-inject).
+- Sleep/resume, display/DPI change.
+- Run at login.
+- Idle dim and tray-on-hover with a real mouse.
+- Start/Search/Task View states.
+- Rules and profiles end to end.
+- Light-theme variant and accent sync.
+- Multi-monitor.
+
 ---
 
 ## 1. How the two reference apps work

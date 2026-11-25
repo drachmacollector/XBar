@@ -19,6 +19,7 @@ public static class TapProtocol
     public const int CmdDumpTree = 4;   // write visual tree to log
     public const int CmdOpacity = 5;    // opacity=<0..1>;ms=<duration>
     public const int CmdQueryGeometry = 6;
+    public const int CmdShutdown = 7;   // restore + go dormant (used when a newer TAP takes over)
 
     // Tap -> app
     public const int EvtHelloReply = 101;  // version=<n>

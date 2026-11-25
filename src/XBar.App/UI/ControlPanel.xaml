@@ -1,0 +1,507 @@
+<Window x:Class="XBar.App.UI.ControlPanel"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:XBar.App.UI"
+        Title="XBar" Width="1060" Height="740" MinWidth="880" MinHeight="560"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ Navigation ============ -->
+        <DockPanel Margin="12,16,8,12">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,0,0,18">
+                <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource AccentFillColorDefaultBrush}">
+                    <TextBlock Text="X" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                </Border>
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="XBar" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock x:Name="NavStatus" Text="Active" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Bottom" Margin="4,8,4,0">
+                <Button x:Name="PauseButton" Content="Pause" HorizontalAlignment="Stretch" Margin="0,0,0,6" Click="Pause_Click" />
+                <Button Content="Restore taskbar now" HorizontalAlignment="Stretch" Click="Panic_Click"
+                        ToolTip="Puts the taskbar and screen layout back to normal immediately and pauses XBar." />
+            </StackPanel>
+
+            <ListBox x:Name="Nav" Style="{StaticResource NavList}" ItemContainerStyle="{StaticResource NavItem}"
+                     SelectionChanged="Nav_SelectionChanged" />
+        </DockPanel>
+
+        <!-- ============ Pages ============ -->
+        <Border Grid.Column="1" Background="{DynamicResource LayerFillColorDefaultBrush}" CornerRadius="8,0,0,0"
+                BorderThickness="1,1,0,0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" Padding="36,28,36,28">
+                <Grid x:Name="Pages" MaxWidth="900" HorizontalAlignment="Stretch">
+
+                    <!-- ===== HOME ===== -->
+                    <StackPanel x:Name="PageHome" Tag="Home|&#xE80F;">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Home" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Your floating, see-through taskbar. Windows use the whole screen and the bar sits on top." />
+
+                        <ui:TaskbarPreview x:Name="HomePreview" Margin="0,0,0,12" />
+
+                        <Border Style="{StaticResource Card}" Padding="16,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock x:Name="StatusTitle" FontSize="16" FontWeight="SemiBold" Text="XBar is active" />
+                                    <TextBlock x:Name="StatusDetail" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock x:Name="StatusWarning" TextWrapping="Wrap" Margin="0,6,0,0" Foreground="#E8A33D" Visibility="Collapsed" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="ConnectTapButton" Content="Load styling" Margin="0,0,8,0" Click="ConnectTap_Click" />
+                                    <Button x:Name="HomePauseButton" Content="Pause" Style="{StaticResource AccentButton}" Click="Pause_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Quick toggles" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Overlay mode" Tag="On: windows use the full screen and the bar floats over them. Off: the classic reserved strip.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Overlay.Enabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Hide over fullscreen games and video">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Overlay.HideOnFullscreen}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Show tray pill" Tag="Icons, clock, network, volume and battery as their own pill.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Shape.ShowTray}" />
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Presets" />
+                        <WrapPanel x:Name="PresetPanel" />
+                    </StackPanel>
+
+                    <!-- ===== OVERLAY ===== -->
+                    <StackPanel x:Name="PageOverlay" Tag="Overlay|&#xE7F4;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Overlay" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="How the bar shares the screen with your windows." />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Overlay mode" Tag="Windows maximise and snap to the full screen; the bar floats on top. Clicks outside the pills reach the app underneath.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Overlay.Enabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom gap" Tag="Pixels kept free at the bottom of the screen. 0 = true full screen. Raise it only if maximised windows hide the bar.">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="InsetSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="10" TickFrequency="1" Value="{Binding Overlay.BottomInsetPx}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=InsetSlider, StringFormat={}{0:0} px}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Hide over fullscreen games and video" Tag="The bar disappears while a borderless/exclusive fullscreen app or video is in front, and comes back after.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Overlay.HideOnFullscreen}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Keep the bar on top" Tag="Re-raises the bar if another always-on-top window covers it.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Overlay.KeepOnTop}" />
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource PageSubtitle}" Margin="2,4,0,0"
+                                   Text="Tip: per-app exceptions (keep the strip reserved for Excel, always show over a video player…) are on the Rules page." />
+                    </StackPanel>
+
+                    <!-- ===== SHAPE ===== -->
+                    <StackPanel x:Name="PageShape" Tag="Shape|&#xE81E;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Shape" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Rounded, floating pills. Both pills are driven together and always update at the same moment." />
+                        <ui:TaskbarPreview x:Name="ShapePreview" Margin="0,0,0,12" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Layout" Tag="Split = apps pill + tray pill. Single = one floating bar. Stock = Windows' own shape.">
+                                    <ComboBox Width="160" ItemsSource="{x:Static ui:EnumLists.ShapeModes}" SelectedItem="{Binding Shape.Mode}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Show tray pill">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Shape.ShowTray}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Float height" Tag="Lift the pills above the screen edge (needs the styling module).">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="FloatSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding Shape.FloatOffset}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=FloatSlider, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Edge-to-edge when maximised" Tag="Single layout only: the bar becomes a full strip while a window is maximised.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Shape.FillWhenMaximized}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Single bar side margin">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="SingleMarginSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="200" TickFrequency="1" Value="{Binding Shape.SingleMarginX}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=SingleMarginSlider, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Apps pill" />
+                        <Border Style="{StaticResource Card}" DataContext="{Binding Shape.Apps}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Corner radius">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="AppsRadius" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="30" TickFrequency="1" Value="{Binding CornerRadius}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsRadius, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Top margin">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="AppsTop" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginTop}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsTop, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom margin">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="AppsBottom" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginBottom}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsBottom, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Side padding">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="AppsPad" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="24" TickFrequency="1" Value="{Binding PaddingX}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsPad, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Tray pill" />
+                        <Border Style="{StaticResource Card}" DataContext="{Binding Shape.Tray}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Corner radius">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="TrayRadius" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="30" TickFrequency="1" Value="{Binding CornerRadius}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayRadius, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Top margin">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="TrayTop" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginTop}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayTop, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom margin / edge gap">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="TrayBottom" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginBottom}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayBottom, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Side padding">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="TrayPad" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="24" TickFrequency="1" Value="{Binding PaddingX}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayPad, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ===== STYLE ===== -->
+                    <StackPanel x:Name="PageStyle" Tag="Style|&#xE790;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Style" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Material, tint and decoration. Each situation can have its own look; the highest one that applies wins (Task View, Search, Start, maximised, visible window, desktop)." />
+                        <ui:TaskbarPreview x:Name="StylePreview" Margin="0,0,0,8" />
+                        <CheckBox x:Name="PreviewMaximized" Content="Preview with a maximised window" Margin="2,0,0,14" Checked="PreviewToggle" Unchecked="PreviewToggle" />
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Decoration" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Outline" Tag="A thin border around each pill.">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:ColorField Color="{Binding Style.BorderColor}" Margin="0,0,12,0" />
+                                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Style.BorderEnabled}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Outline thickness">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="BorderW" Style="{StaticResource ValueSlider}" Minimum="0.5" Maximum="4" TickFrequency="0.5" Value="{Binding Style.BorderThickness}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=BorderW, StringFormat={}{0:0.0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Glow" Tag="Soft glow in the outline colour.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Style.GlowEnabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Drop shadow">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Style.ShadowEnabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Shadow strength">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="ShadowOp" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="1" TickFrequency="0.05" Value="{Binding Style.ShadowOpacity}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=ShadowOp, StringFormat={}{0:P0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Shadow softness">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="ShadowBlur" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="40" TickFrequency="1" Value="{Binding Style.ShadowBlur}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=ShadowBlur, StringFormat={}{0:0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Gradient tint" Tag="Blend the tint into a second colour.">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:ColorField Color="{Binding Style.GradientColor}" Margin="0,0,12,0" />
+                                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Style.GradientEnabled}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Gradient angle">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="GradAngle" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="360" TickFrequency="5" Value="{Binding Style.GradientAngle}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=GradAngle, StringFormat={}{0:0}°}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Use Windows accent colour" Tag="Tint follows your accent colour (keeps your opacity).">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Style.SyncAccentColor}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Separate light-theme look" Tag="When Windows is in light mode, use the light variant (copied from the current look the first time you turn this on).">
+                                    <CheckBox x:Name="LightDarkToggle" Style="{StaticResource Switch}" IsChecked="{Binding Style.AutoLightDark}" Checked="LightDark_Checked" />
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Looks per situation" />
+                        <ui:AppearanceEditor DataContext="{Binding Style.Desktop}" Title="Desktop (default)" Description="Nothing open on this screen. Also used when no other situation applies." ShowEnable="False" />
+                        <ui:AppearanceEditor DataContext="{Binding Style.VisibleWindow}" Title="A window is open" Description="Any normal window is visible on this screen." />
+                        <ui:AppearanceEditor DataContext="{Binding Style.MaximizedWindow}" Title="A window is maximised" Description="Useful to make the bar more solid over app content." />
+                        <ui:AppearanceEditor DataContext="{Binding Style.StartOpen}" Title="Start menu open" />
+                        <ui:AppearanceEditor DataContext="{Binding Style.SearchOpen}" Title="Search open" />
+                        <ui:AppearanceEditor DataContext="{Binding Style.TaskViewOpen}" Title="Task View open" />
+                    </StackPanel>
+
+                    <!-- ===== BEHAVIOUR ===== -->
+                    <StackPanel x:Name="PageBehavior" Tag="Behaviour|&#xE945;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Behaviour" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="How the bar reacts to you. The bar never auto-hides; these only change how present it is." />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Peek through" Tag="Hold the peek hotkey to make the bar invisible and click-through, so you can reach what's under it.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Behavior.PeekEnabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Idle dim" Tag="Fade the bar while the mouse is away from it (needs the styling module).">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Behavior.IdleDimEnabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Idle opacity">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="IdleOp" Style="{StaticResource ValueSlider}" Minimum="0.1" Maximum="1" TickFrequency="0.05" Value="{Binding Behavior.IdleOpacity}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=IdleOp, StringFormat={}{0:P0}}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Idle delay">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="IdleDelay" Style="{StaticResource ValueSlider}" Minimum="250" Maximum="10000" TickFrequency="250" Value="{Binding Behavior.IdleDelayMs}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Width="60" Text="{Binding Value, ElementName=IdleDelay, StringFormat={}{0:0} ms}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Show tray pill only on hover" Tag="The tray pill appears when the mouse moves over its area.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Behavior.TrayOnHoverOnly}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Animations" Tag="Fade between looks and opacity levels.">
+                                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Behavior.AnimationsEnabled}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Animation length">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider x:Name="AnimMs" Style="{StaticResource ValueSlider}" Minimum="50" Maximum="800" TickFrequency="10" Value="{Binding Behavior.AnimationMs}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Width="60" Text="{Binding Value, ElementName=AnimMs, StringFormat={}{0:0} ms}" />
+                                    </StackPanel>
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ===== RULES ===== -->
+                    <StackPanel x:Name="PageRules" Tag="Rules|&#xEA37;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Rules" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Per-app exceptions, checked against the app in front. Reserve space = keep the classic strip so the bar doesn't cover it. Always show = keep the bar even in fullscreen. Hide bar = hide it while that app is in front. Appearance = a custom look." />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Button Content="Add rule" Style="{StaticResource AccentButton}" Click="AddRule_Click" />
+                            <ComboBox x:Name="RunningApps" Width="260" Margin="10,0,0,0" ToolTip="Add a rule for a running app" />
+                            <Button Content="Add for this app" Margin="6,0,0,0" Click="AddRuleForApp_Click" />
+                        </StackPanel>
+                        <ItemsControl x:Name="RulesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Card}" Padding="14,10">
+                                        <StackPanel>
+                                            <WrapPanel>
+                                                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Enabled}" Margin="0,0,14,6" VerticalAlignment="Center" />
+                                                <ComboBox Width="130" ItemsSource="{x:Static ui:EnumLists.RuleMatches}" SelectedItem="{Binding Match}" Margin="0,0,8,6" />
+                                                <TextBox Width="180" Text="{Binding Pattern, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6" ToolTip="e.g. EXCEL.EXE, a window class, or part of a title" />
+                                                <ComboBox Width="130" ItemsSource="{x:Static ui:EnumLists.RuleActions}" SelectedItem="{Binding Action}" Margin="0,0,8,6" />
+                                                <CheckBox Content="Only when maximised" IsChecked="{Binding OnlyWhenMaximized}" Margin="0,0,8,6" VerticalAlignment="Center" />
+                                                <Button Content="Remove" Click="RemoveRule_Click" Tag="{Binding}" Margin="0,0,0,6" />
+                                            </WrapPanel>
+                                            <Expander Header="Custom appearance (Appearance rules)" Margin="0,4,0,0">
+                                                <ui:AppearanceEditor DataContext="{Binding Appearance}" Title="Look while this app is in front" ShowEnable="False" Margin="0,8,0,0" />
+                                            </Expander>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="NoRules" Text="No rules yet." Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="2,0" />
+                    </StackPanel>
+
+                    <!-- ===== PROFILES ===== -->
+                    <StackPanel x:Name="PageProfiles" Tag="Profiles|&#xE77B;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Profiles" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Save the current shape, style and behaviour as a named profile. Switch with the tray menu or the next-profile hotkey." />
+                        <Border Style="{StaticResource Card}" Padding="16,12">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="ProfileName" Width="220" Text="My profile" />
+                                <Button Content="Save current as profile" Style="{StaticResource AccentButton}" Margin="8,0,0,0" Click="SaveProfile_Click" />
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl x:Name="ProfilesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Card}" Padding="16,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Name}" FontSize="14" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <Button Content="Apply" Tag="{Binding}" Click="ApplyProfile_Click" Margin="0,0,6,0" />
+                                                <Button Content="Overwrite with current" Tag="{Binding}" Click="UpdateProfile_Click" Margin="0,0,6,0" />
+                                                <Button Content="Delete" Tag="{Binding}" Click="DeleteProfile_Click" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Import / export" />
+                        <Border Style="{StaticResource Card}" Padding="16,12">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Export all settings…" Click="Export_Click" Margin="0,0,8,0" />
+                                <Button Content="Import settings…" Click="Import_Click" Margin="0,0,8,0" />
+                                <Button Content="Reset to defaults" Click="Reset_Click" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ===== HOTKEYS ===== -->
+                    <StackPanel x:Name="PageHotkeys" Tag="Hotkeys|&#xE765;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Hotkeys" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Click a box and press a key combination (at least one of Ctrl / Win / Alt / Shift). Backspace clears it." />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Panic: restore taskbar" Tag="Always puts everything back to normal and pauses XBar.">
+                                    <ui:HotkeyBox Hotkey="{Binding Hotkeys.Panic}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Pause / resume">
+                                    <ui:HotkeyBox Hotkey="{Binding Hotkeys.TogglePause}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Overlay ↔ reserve mode">
+                                    <ui:HotkeyBox Hotkey="{Binding Hotkeys.ToggleOverlay}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Peek through (hold)">
+                                    <ui:HotkeyBox Hotkey="{Binding Hotkeys.Peek}" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Next profile">
+                                    <ui:HotkeyBox Hotkey="{Binding Hotkeys.NextProfile}" />
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock x:Name="HotkeyWarning" Foreground="#E8A33D" TextWrapping="Wrap" Margin="2,0" />
+                    </StackPanel>
+
+                    <!-- ===== SAFETY ===== -->
+                    <StackPanel x:Name="PageSafety" Tag="Startup &amp; safety|&#xEA18;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Startup &amp; safety" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Everything XBar changes is temporary: it is undone on exit, by a watchdog if XBar crashes, and at the next launch if needed. Restarting Explorer or signing out always resets it." />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Start XBar when I sign in">
+                                    <CheckBox x:Name="RunAtLogin" Style="{StaticResource Switch}" Checked="RunAtLogin_Changed" Unchecked="RunAtLogin_Changed" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Restore taskbar now" Tag="Undo every change immediately and pause.">
+                                    <Button Content="Restore" Click="Panic_Click" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Restart Explorer" Tag="Last-resort reset of the taskbar. Open File Explorer windows will close.">
+                                    <Button Content="Restart Explorer…" Click="RestartExplorer_Click" />
+                                </HeaderedContentControl>
+                                <Separator Style="{StaticResource RowDivider}" />
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Emergency options" Tag="Start menu → XBar has 'Restore taskbar' and 'Safe mode' shortcuts. Holding Shift while starting XBar also starts it in safe mode.">
+                                    <Button Content="Open log folder" Click="OpenLogs_Click" />
+                                </HeaderedContentControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ===== DIAGNOSTICS ===== -->
+                    <StackPanel x:Name="PageDiagnostics" Tag="Diagnostics|&#xEBE8;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="Diagnostics" />
+                        <TextBlock Style="{StaticResource PageSubtitle}" Text="Live state of the overlay, regions and work areas. Updates every second while this page is open." />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Copy" Click="CopyDiag_Click" Margin="0,0,8,0" />
+                            <Button Content="Dump taskbar visual tree" Click="DumpTree_Click" Margin="0,0,8,0" />
+                            <Button Content="Open log folder" Click="OpenLogs_Click" />
+                        </StackPanel>
+                        <TextBox x:Name="DiagText" IsReadOnly="True" FontFamily="Consolas" FontSize="12" TextWrapping="NoWrap"
+                                 HorizontalScrollBarVisibility="Auto" MinHeight="220" />
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Recent log" />
+                        <TextBox x:Name="LogText" IsReadOnly="True" FontFamily="Consolas" FontSize="11" TextWrapping="NoWrap"
+                                 HorizontalScrollBarVisibility="Auto" Height="260" VerticalScrollBarVisibility="Auto" />
+                    </StackPanel>
+
+                    <!-- ===== ABOUT ===== -->
+                    <StackPanel x:Name="PageAbout" Tag="About|&#xE946;" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource PageTitle}" Text="About XBar" />
+                        <Border Style="{StaticResource Card}" Padding="16,14">
+                            <StackPanel>
+                                <TextBlock x:Name="VersionText" FontSize="14" />
+                                <TextBlock TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="A floating, rounded, translucent overlay taskbar for Windows 11. Free software under the GNU GPL v3 or later." />
+                                <TextBlock TextWrapping="Wrap" Margin="0,12,0,0"
+                                           Text="Inspired by RoundedTB (torchgm) and TranslucentTB (TranslucentTB contributors), both GPL-3.0. See THIRD_PARTY_NOTICES.md." />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                </Grid>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>

@@ -81,18 +81,28 @@ public sealed class TapClient : IAppearanceSink, IDisposable
         // DLL must load under a new name, and the old one is asked to go dormant first.
         var (path, tag) = StageDll();
 
-        var existing = Win32.FindWindow(TapProtocol.TapWindowClass, null);
-        if (existing != IntPtr.Zero)
+        // Reuse our own TAP if this Explorer already has it; ask any other (older) build to go dormant.
+        for (IntPtr prev = IntPtr.Zero; ;)
         {
-            if (Hello(existing) == TapProtocol.Version && Win32.WindowText(existing) == tag)
+            var w = Win32.FindWindowEx(IntPtr.Zero, prev, TapProtocol.TapWindowClass, null);
+            if (w == IntPtr.Zero) break;
+            prev = w;
+            if (Win32.WindowText(w) == tag)
             {
-                _tapHwnd = existing;
-                SetStatus("Connected");
-                return true;
+                if (Hello(w) == TapProtocol.Version)
+                {
+                    _tapHwnd = w;
+                    _lastSent.Clear();
+                    SetStatus("Connected");
+                    SafetyJournal.Update(j => { j.Dirty = true; j.TapActive = true; });
+                    return true;
+                }
             }
-            Log.Info("Asking an older TAP instance to go dormant");
-            Send(existing, TapProtocol.CmdShutdown, "");
-            Thread.Sleep(200);
+            else
+            {
+                Log.Info($"Asking an older TAP instance ({Win32.WindowText(w)}) to go dormant");
+                Send(w, TapProtocol.CmdShutdown, "");
+            }
         }
 
         IntPtr mod = Win32.LoadLibrary(path);

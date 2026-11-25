@@ -29,6 +29,7 @@ public sealed class XBarEngine : IDisposable
     DateTime _lastMouseActivity = DateTime.UtcNow;
     POINT _lastCursor;
     readonly Dictionary<IntPtr, double> _opacity = new();
+    readonly Dictionary<IntPtr, string?> _hideReasons = new();
 
     public Settings Settings { get; private set; }
     public IAppearanceSink Appearance { get; set; } = new NullAppearanceSink();
@@ -377,7 +378,16 @@ public sealed class XBarEngine : IDisposable
         bool hideRule = fgHere && Settings.Rules.Any(r => r.Action == RuleAction.HideBar && WindowTracker.Matches(r, fg!));
         bool fullscreen = ms.Fullscreen is not null && Settings.Overlay.HideOnFullscreen && !alwaysShow;
 
-        if (fullscreen || hideRule || (_peeking && Settings.Behavior.PeekEnabled && !Appearance.IsAvailable))
+        string? hideReason = fullscreen ? $"fullscreen: {ms.Fullscreen!.Process} '{ms.Fullscreen.Title}'"
+            : hideRule ? $"hide rule: {fg!.Process}"
+            : (_peeking && Settings.Behavior.PeekEnabled && !Appearance.IsAvailable) ? "peek" : null;
+        _hideReasons.TryGetValue(tb.Hwnd, out var prevReason);
+        if (hideReason != prevReason)
+        {
+            Log.Info(hideReason is null ? $"Bar shown on {tb.Monitor.Device}" : $"Bar hidden on {tb.Monitor.Device} ({hideReason})");
+            _hideReasons[tb.Hwnd] = hideReason;
+        }
+        if (hideReason is not null)
         {
             _shape.Hide(tb.Hwnd);
             LastPills[tb.Hwnd] = new();
@@ -413,8 +423,26 @@ public sealed class XBarEngine : IDisposable
         geo = geo with { Taskbar = tb.Rect };
 
         var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill);
+
+        // The window region is the hit-test + clip mask. When the TAP paints anti-aliased pills
+        // (with shadow/glow), the mask must be a little larger than the pills and follow the float lift.
+        int lift = (int)Math.Round(shape.FloatOffset * tb.Scale);
+        int pad = 0;
+        if (Appearance.IsAvailable)
+        {
+            pad = 1;
+            if (style.ShadowEnabled || style.GlowEnabled) pad = Math.Max(pad, (int)Math.Ceiling(Math.Min(style.ShadowBlur, 21) * tb.Scale / 1.5 * 0.9));
+        }
+        var regionPills = pills.Select(p =>
+        {
+            var r = p.Rect;
+            r.Left -= pad; r.Right += pad;
+            r.Top = Math.Max(0, r.Top - pad - lift); r.Bottom = Math.Min(tb.Rect.Height, r.Bottom + pad - lift);
+            return p with { Rect = r, Radius = p.Radius + pad };
+        }).ToList();
+
         if (shape.Mode == ShapeMode.Stock) _shape.Clear(tb.Hwnd);
-        else if (pills.Count > 0) _shape.Apply(tb.Hwnd, pills);
+        else if (regionPills.Count > 0) _shape.Apply(tb.Hwnd, regionPills);
         LastPills[tb.Hwnd] = pills;
 
         if (Settings.Overlay.KeepOnTop) EnsureTopmost(tb.Hwnd);

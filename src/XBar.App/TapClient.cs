@@ -197,7 +197,14 @@ public sealed class TapClient : IAppearanceSink, IDisposable
         _lastSent[spec.Taskbar] = payload;
         if (Send(_tapHwnd, TapProtocol.CmdAppearance, payload) < 0)
             Log.Warn("TAP did not accept appearance");
+        else if (!_journaled)
+        {
+            SafetyJournal.Update(j => { j.Dirty = true; j.TapActive = true; });
+            _journaled = true;
+        }
     }
+
+    bool _journaled;
 
     public void SetOpacity(IntPtr taskbar, double opacity, int ms)
     {
@@ -217,6 +224,7 @@ public sealed class TapClient : IAppearanceSink, IDisposable
         var h = _tapHwnd != IntPtr.Zero && Win32.IsWindow(_tapHwnd) ? _tapHwnd : Win32.FindWindow(TapProtocol.TapWindowClass, null);
         if (h != IntPtr.Zero) Send(h, TapProtocol.CmdRestore, "");
         SafetyJournal.Update(j => j.TapActive = false);
+        _journaled = false;
     }
 
     public void OnTaskbarRecreated()

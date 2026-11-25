@@ -13,7 +13,9 @@ namespace XBar.App.UI;
 /// <summary>Live mock-up of the bar using the current settings (drawn in WPF, no Explorer needed).</summary>
 public sealed class TaskbarPreview : Border
 {
-    const double ScreenW = 1536, BarH = 48;
+    // Mock screen in DIPs; narrower than a real one so the pills read well at preview size.
+    const double ScreenW = 960, BarH = 48;
+    const int Icons = 7;
     readonly Canvas _canvas = new() { ClipToBounds = true };
     Settings? _settings;
     bool _maximized;
@@ -40,8 +42,7 @@ public sealed class TaskbarPreview : Border
         double w = ActualWidth, h = ActualHeight;
         if (_settings is null || w < 50) return;
         double k = w / ScreenW;
-        double barTop = h - BarH * k * 1.6;
-        double barH = BarH * k * 1.6;
+        double barTop = h - BarH * k;
 
         // Wallpaper
         _canvas.Children.Add(new Rectangle
@@ -85,13 +86,13 @@ public sealed class TaskbarPreview : Border
 
         var s = _settings;
         var look = _maximized && s.Style.MaximizedWindow.Enabled ? s.Style.MaximizedWindow : s.Style.Desktop;
-        double scale = 1.6 * k; // DIP -> preview px
+        double scale = k; // DIP -> preview px
 
         // Mock content geometry in a 1536x48 DIP taskbar
-        int appsW = 9 * 44;
+        int appsW = Icons * 44;
         var tbRect = new RECT(0, 0, (int)ScreenW, (int)BarH);
         var apps = new RECT((int)(ScreenW - appsW) / 2, 0, (int)(ScreenW + appsW) / 2, (int)BarH);
-        var tray = new RECT((int)ScreenW - 330, 0, (int)ScreenW - 14, (int)BarH);
+        var tray = new RECT((int)ScreenW - 240, 0, (int)ScreenW - 14, (int)BarH);
         var pills = PillLayout.Compute(new TaskbarGeometry(tbRect, apps, tray), s.Shape, 1.0, s.Shape.ShowTray,
             s.Shape.Mode == ShapeMode.Single && s.Shape.FillWhenMaximized && _maximized);
 
@@ -141,7 +142,7 @@ public sealed class TaskbarPreview : Border
             if (p.Kind is "apps" or "single" or "full")
             {
                 double icon = 22 * scale, startX = apps.Left * scale + 11 * scale;
-                for (int i = 0; i < 9; i++)
+                for (int i = 0; i < Icons; i++)
                 {
                     var ic = new Rectangle
                     {

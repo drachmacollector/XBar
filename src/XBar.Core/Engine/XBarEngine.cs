@@ -424,9 +424,18 @@ public sealed class XBarEngine : IDisposable
 
         var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill);
 
+        // Float: the pill keeps its top edge (the window can't grow upwards) and its bottom rises by
+        // `lift`, leaving a gap under it; the icons are moved up by half that so they stay centred.
+        // Only possible with the TAP (it moves the XAML content); clamp so a usable pill remains.
+        int lift = Appearance.IsAvailable && !fill ? (int)Math.Round(shape.FloatOffset * tb.Scale) : 0;
+        if (lift > 0 && pills.Count > 0)
+            lift = Math.Min(lift, pills.Min(p => p.Rect.Height) - (int)(32 * tb.Scale));
+        lift = Math.Max(0, lift);
+        int contentShift = lift / 2;
+        pills = pills.Select(p => { var r = p.Rect; r.Bottom -= lift; return p with { Rect = r, Radius = Math.Min(p.Radius, r.Height / 2) }; }).ToList();
+
         // The window region is the hit-test + clip mask. When the TAP paints anti-aliased pills
-        // (with shadow/glow), the mask must be a little larger than the pills and follow the float lift.
-        int lift = (int)Math.Round(shape.FloatOffset * tb.Scale);
+        // (with shadow/glow), the mask must be a little larger than the pills.
         int pad = 0;
         if (Appearance.IsAvailable)
         {
@@ -439,7 +448,7 @@ public sealed class XBarEngine : IDisposable
         {
             var r = p.Rect;
             r.Left -= pad; r.Right += pad;
-            r.Top = Math.Max(0, r.Top - pad - lift); r.Bottom = Math.Min(tb.Rect.Height, r.Bottom + pad - lift);
+            r.Top = Math.Max(0, r.Top - pad); r.Bottom = Math.Min(tb.Rect.Height, r.Bottom + pad);
             return p with { Rect = r, Radius = p.Radius + pad };
         }).ToList();
 
@@ -449,8 +458,11 @@ public sealed class XBarEngine : IDisposable
 
         if (Settings.Overlay.KeepOnTop) EnsureTopmost(tb.Hwnd);
 
-        Appearance.Apply(new AppearanceSpec(tb.Hwnd, look, style, pills, tb.Scale,
-            shape.FloatOffset * tb.Scale, Settings.Behavior.AnimationsEnabled ? Settings.Behavior.AnimationMs : 0));
+        // The TAP's pill canvas lives inside the content it shifts, so pre-compensate the drawn pills.
+        var drawPills = contentShift == 0 ? pills
+            : pills.Select(p => { var r = p.Rect; r.Top += contentShift; r.Bottom += contentShift; return p with { Rect = r }; }).ToList();
+        Appearance.Apply(new AppearanceSpec(tb.Hwnd, look, style, drawPills, tb.Scale,
+            contentShift, Settings.Behavior.AnimationsEnabled ? Settings.Behavior.AnimationMs : 0));
     }
 
     StyleSettings EffectiveStyle()

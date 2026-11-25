@@ -21,8 +21,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
     <TargetName>XBar.Tap</TargetName>
-    <OutDir>$(SolutionDir)artifacts\tap\</OutDir>
-    <IntDir>$(SolutionDir)artifacts\obj\tap\$(Configuration)\</IntDir>
+    <OutDir>$(MSBuildThisFileDirectory)..\..\artifacts\tap\</OutDir>
+    <IntDir>$(MSBuildThisFileDirectory)..\..\artifacts\obj\tap\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

@@ -16,7 +16,7 @@ if (-not $SkipTap) {
     }
     if (-not $msbuild) { throw "MSBuild with the C++ tools was not found. Install VS Build Tools (Desktop C++ + Windows 11 SDK)." }
     Write-Host "== XBar.Tap ($config)" -ForegroundColor Cyan
-    & $msbuild "$root\src\XBar.Tap\XBar.Tap.vcxproj" /p:Configuration=$config /p:Platform=x64 "/p:SolutionDir=$root\" /m /nologo /v:minimal
+    & $msbuild "$root\src\XBar.Tap\XBar.Tap.vcxproj" /p:Configuration=$config /p:Platform=x64 /m /nologo /v:minimal
     if ($LASTEXITCODE) { throw "XBar.Tap build failed" }
 }
 

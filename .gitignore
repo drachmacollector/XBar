@@ -1,3 +1,8 @@
 /reference/
-reference/RoundedTB
-reference/TranslucentTB
+bin/
+obj/
+x64/
+.vs/
+*.user
+/artifacts/
+/publish/

@@ -1,0 +1,6 @@
+LIBRARY
+EXPORTS
+    XBarInject
+    XBarHookProc
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE

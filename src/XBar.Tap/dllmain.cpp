@@ -132,8 +132,10 @@ namespace xbar
         HRESULT hr = E_FAIL;
         for (int attempt = 1; attempt <= 40 && FAILED(hr); attempt++)
         {
-            // XAML diagnostics can only be initialised once per thread; use a fresh one each try.
-            std::wstring endpoint = tag + L"_" + std::to_wstring(attempt);
+            // XAML only accepts endpoints named VisualDiagConnectionN (other names give ERROR_NOT_FOUND),
+            // and a number may already be taken by another TAP (e.g. TranslucentTB), so walk them.
+            // Diagnostics can only be initialised once per thread; use a fresh one each try.
+            std::wstring endpoint = L"VisualDiagConnection" + std::to_wstring(attempt);
             std::thread([&] { hr = ixde(endpoint.c_str(), pid, nullptr, path.c_str(), CLSID_XBarTapSite, nullptr); }).join();
             if (FAILED(hr))
             {

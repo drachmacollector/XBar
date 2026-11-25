@@ -436,7 +436,7 @@ void Tap::Apply(TaskbarState& tb, const Look& look)
         // so translucent pills stay see-through).
         auto rings = [&](wuc_::Color color, double strength, double extent, double dy)
         {
-            const int n = std::clamp(static_cast<int>(extent / scale / 1.5), 1, 14);
+            const int n = std::clamp(static_cast<int>(extent / scale / 1.5), 1, 3); // region pad is 3 px
             for (int i = n; i >= 1; i--)
             {
                 const double f = 1.0 - (i - 1.0) / n;

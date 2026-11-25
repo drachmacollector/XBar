@@ -59,7 +59,7 @@ public sealed class ShapeSettings
 {
     public ShapeMode Mode { get; set; } = ShapeMode.Split;
     public PillSettings Apps { get; set; } = new();
-    public PillSettings Tray { get; set; } = new() { PaddingX = 4 };
+    public PillSettings Tray { get; set; } = new() { PaddingX = 8 };
     /// <summary>Single-bar mode side margins (DIPs).</summary>
     public double SingleMarginX { get; set; } = 8;
     public bool ShowTray { get; set; } = true;

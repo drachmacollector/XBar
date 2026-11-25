@@ -431,7 +431,9 @@ public sealed class XBarEngine : IDisposable
         if (Appearance.IsAvailable)
         {
             pad = 1;
-            if (style.ShadowEnabled || style.GlowEnabled) pad = Math.Max(pad, (int)Math.Ceiling(Math.Min(style.ShadowBlur, 21) * tb.Scale / 1.5 * 0.9));
+            // Keep this small: everything inside the region but outside the pills shows raw taskbar
+            // content (e.g. the Show Desktop sliver). 3 px is enough for a soft edge shadow.
+            if (style.ShadowEnabled || style.GlowEnabled) pad = 3;
         }
         var regionPills = pills.Select(p =>
         {

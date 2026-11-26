@@ -48,18 +48,18 @@ public sealed class OverlaySettings
 
 public sealed class PillSettings
 {
-    public double CornerRadius { get; set; } = 12;
+    public double CornerRadius { get; set; } = 30;
     /// <summary>Pill height in DIPs. Capped at what is left of the taskbar after the float gap.</summary>
-    public double Height { get; set; } = 44;
+    public double Height { get; set; } = 46;
     /// <summary>Extra horizontal space around the content.</summary>
-    public double PaddingX { get; set; } = 6;
+    public double PaddingX { get; set; } = 42;
 }
 
 public sealed class ShapeSettings
 {
     public ShapeMode Mode { get; set; } = ShapeMode.Split;
     public PillSettings Apps { get; set; } = new();
-    public PillSettings Tray { get; set; } = new() { PaddingX = 8 };
+    public PillSettings Tray { get; set; } = new() { PaddingX = 23 };
     /// <summary>Single-bar mode side margins (DIPs).</summary>
     public double SingleMarginX { get; set; } = 8;
     public bool ShowTray { get; set; } = true;
@@ -83,7 +83,7 @@ public sealed class Appearance
 
 public sealed class StyleSettings
 {
-    public Appearance Desktop { get; set; } = new() { Accent = AccentMode.Liquid, Color = "#1C14181E", BlurRadius = 6 };
+    public Appearance Desktop { get; set; } = new() { Accent = AccentMode.Liquid, Color = "#1C14181E", BlurRadius = 0 };
     public Appearance VisibleWindow { get; set; } = new() { Enabled = false };
     public Appearance MaximizedWindow { get; set; } = new() { Enabled = true, Accent = AccentMode.Liquid, Color = "#55181C22", BlurRadius = 6 };
     public Appearance StartOpen { get; set; } = new() { Enabled = false };

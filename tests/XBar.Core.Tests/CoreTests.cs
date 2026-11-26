@@ -15,7 +15,7 @@ public class PillLayoutTests
     [Fact]
     public void Split_produces_apps_and_tray_pills_relative_to_window()
     {
-        var s = new ShapeSettings();
+        var s = Classic();
         var pills = PillLayout.Compute(new TaskbarGeometry(Tb, Apps, Tray), s, 1.25, true, false);
         Assert.Equal(2, pills.Count);
         var apps = pills[0];
@@ -72,6 +72,13 @@ public class PillLayoutTests
         Assert.Equal(15, PillLayout.EffectiveLift(s, 60, 1.25));
     }
 
+    /// <summary>The original 44 DIP / 12 radius / 6+8 padding shape, so layout maths tests don't depend on the default look.</summary>
+    static ShapeSettings Classic() => new()
+    {
+        Apps = new PillSettings { CornerRadius = 12, Height = 44, PaddingX = 6 },
+        Tray = new PillSettings { CornerRadius = 12, Height = 44, PaddingX = 8 },
+    };
+
     [Theory]
     [InlineData(TaskbarEdge.Left)]
     [InlineData(TaskbarEdge.Right)]
@@ -82,7 +89,7 @@ public class PillLayoutTests
         var tb = new RECT(x0, 0, x0 + 60, 1080);
         var apps = new RECT(x0, 250, x0 + 60, 690);
         var tray = new RECT(x0, 760, x0 + 60, 1070);
-        var pills = PillLayout.Compute(new TaskbarGeometry(tb, apps, tray), new ShapeSettings(), 1.25, true, false, 0, edge);
+        var pills = PillLayout.Compute(new TaskbarGeometry(tb, apps, tray), Classic(), 1.25, true, false, 0, edge);
         Assert.Equal(2, pills.Count);
         var a = pills[0]; var t = pills[1];
         Assert.Equal("apps", a.Kind);

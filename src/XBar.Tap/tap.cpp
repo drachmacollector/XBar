@@ -425,7 +425,7 @@ void Tap::DecorateLiquid(wuxc::Border& pill, double w, double h, double radius, 
     const auto rim = look.border ? look.borderColor : wuc_::Color{ 0, 255, 255, 255 };
     const double th = std::max(1.0, look.borderW / scale);
     pill.BorderThickness(wux::ThicknessHelper::FromUniformLength(th));
-    pill.BorderBrush(RimBrush(rim, 1.0, 0.2, 0.7));
+    pill.BorderBrush(RimBrush(rim, 0.45, 0.05, 0.28));   // subtle: must not look like a white outline on dark backdrops
 
     wuxc::Grid layers;
     const double r1 = std::max(0.0, radius - th);
@@ -479,7 +479,7 @@ void Tap::DecorateLiquid(wuxc::Border& pill, double w, double h, double radius, 
         geo.Figures().Append(figure(band, band, W - 2 * band, H - 2 * band, std::max(0.0, r1 - band)));
 
         auto compositor = wuxh::ElementCompositionPreview::GetElementVisual(tb.frame).Compositor();
-        const wfn::float4 white{ 1.f, 1.f, 1.f, 0.16f };
+        const wfn::float4 white{ 1.f, 1.f, 1.f, 0.04f };
         wux::Shapes::Path lens;
         lens.Data(geo);
         lens.HorizontalAlignment(wux::HorizontalAlignment::Left);
@@ -489,23 +489,21 @@ void Tap::DecorateLiquid(wuxc::Border& pill, double w, double h, double radius, 
     }
     catch (...) { Log(L"Liquid: edge lens unavailable"); }
     // 2. specular rim, 3. chromatic fringe
-    ring(0, RimBrush({ 0xFF, 0xFF, 0xFF, 0xFF }, 0.85, 0.0, 0.40));
+    ring(0, RimBrush({ 0xFF, 0xFF, 0xFF, 0xFF }, 0.22, 0.0, 0.10));
     {
         wuxm::LinearGradientBrush f;
         f.StartPoint({ 1.0f, 0.0f });
         f.EndPoint({ 0.0f, 1.0f });
-        wuxm::GradientStop g0; g0.Offset(0.0); g0.Color({ 0x70, 0x9A, 0xD8, 0xFF });
+        wuxm::GradientStop g0; g0.Offset(0.0); g0.Color({ 0x20, 0x9A, 0xD8, 0xFF });
         wuxm::GradientStop g1; g1.Offset(0.5); g1.Color({ 0x00, 0xFF, 0xFF, 0xFF });
-        wuxm::GradientStop g2; g2.Offset(1.0); g2.Color({ 0x70, 0xFF, 0xB4, 0xA0 });
+        wuxm::GradientStop g2; g2.Offset(1.0); g2.Color({ 0x20, 0xFF, 0xB4, 0xA0 });
         f.GradientStops().Append(g0); f.GradientStops().Append(g1); f.GradientStops().Append(g2);
         ring(1, f);
     }
 
     // 4. inner glow rings, bottom inner shadow, top sheen
-    ring(2, RimBrush({ 0x50, 0xFF, 0xFF, 0xFF }, 0.8, 0.15, 0.5));
-    ring(3, RimBrush({ 0x30, 0xFF, 0xFF, 0xFF }, 0.8, 0.10, 0.4));
     fill(vertical({ { 0.0, { 0x00, 0, 0, 0 } }, { 0.62, { 0x00, 0, 0, 0 } }, { 1.0, { 0x38, 0, 0, 0 } } }));
-    fill(vertical({ { 0.0, { 0x40, 0xFF, 0xFF, 0xFF } }, { 0.5, { 0x00, 0xFF, 0xFF, 0xFF } } }));
+    fill(vertical({ { 0.0, { 0x14, 0xFF, 0xFF, 0xFF } }, { 0.5, { 0x00, 0xFF, 0xFF, 0xFF } } }));
 
     pill.Child(layers);
 }

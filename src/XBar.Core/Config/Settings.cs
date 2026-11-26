@@ -92,7 +92,7 @@ public sealed class StyleSettings
 
     // Pill decoration (shared by all states)
     public bool BorderEnabled { get; set; } = true;
-    public string BorderColor { get; set; } = "#B0FFFFFF";
+    public string BorderColor { get; set; } = "#80FFFFFF";
     public double BorderThickness { get; set; } = 1;
     public bool GlowEnabled { get; set; } = false;
     public bool ShadowEnabled { get; set; } = true;

@@ -333,6 +333,14 @@ public partial class ControlPanel : Window
         catch (Exception ex) { MessageBox.Show(this, $"Could not import: {ex.Message}", "XBar"); }
     }
 
+    void ResetLook_Click(object sender, RoutedEventArgs e)
+    {
+        S.Style = new StyleSettings();
+        S.Shape = new ShapeSettings();
+        Reload();
+        Commit();
+    }
+
     void Reset_Click(object sender, RoutedEventArgs e)
     {
         if (MessageBox.Show(this, "Reset all settings to defaults? Profiles and rules are removed.", "XBar", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;

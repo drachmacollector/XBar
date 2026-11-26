@@ -28,7 +28,7 @@ public class PillLayoutTests
 
         var tray = pills[1];
         Assert.Equal("tray", tray.Kind);
-        Assert.True(tray.Rect.Right <= 1920 - 5); // keeps a gap from the screen edge
+        Assert.Equal(1920, tray.Rect.Right);     // attached to the screen edge
         Assert.True(tray.Rect.Left > apps.Rect.Right);
     }
 

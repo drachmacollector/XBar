@@ -176,7 +176,7 @@
                                 <Separator Style="{StaticResource RowDivider}" />
                                 <HeaderedContentControl Style="{StaticResource Row}" Header="Side padding">
                                     <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="AppsPad" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="24" TickFrequency="1" Value="{Binding PaddingX}" />
+                                        <Slider x:Name="AppsPad" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="80" TickFrequency="1" Value="{Binding PaddingX}" />
                                         <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsPad, StringFormat={}{0:0}}" />
                                     </StackPanel>
                                 </HeaderedContentControl>
@@ -200,16 +200,16 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom margin / edge gap">
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom margin">
                                     <StackPanel Orientation="Horizontal">
                                         <Slider x:Name="TrayBottom" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginBottom}" />
                                         <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayBottom, StringFormat={}{0:0}}" />
                                     </StackPanel>
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Side padding">
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Left padding">
                                     <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="TrayPad" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="24" TickFrequency="1" Value="{Binding PaddingX}" />
+                                        <Slider x:Name="TrayPad" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="80" TickFrequency="1" Value="{Binding PaddingX}" />
                                         <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayPad, StringFormat={}{0:0}}" />
                                     </StackPanel>
                                 </HeaderedContentControl>

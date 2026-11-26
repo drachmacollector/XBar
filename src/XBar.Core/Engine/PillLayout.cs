@@ -51,39 +51,64 @@ public static class PillLayout
         }
 
         // Split: apps pill + tray pill
+        bool hasTray = includeTray && g.HasTray;
+
+        RECT appsRect = default, trayRect = default;
+        var ap = s.Apps;
+        var tp = s.Tray;
+
         if (g.HasApps)
         {
-            var p = s.Apps;
-            int pad = Px(p.PaddingX, scale);
-            var r = new RECT(
-                Math.Max(0, g.Apps.Left - tb.Left - pad),
-                Px(p.MarginTop, scale),
-                Math.Min(w, g.Apps.Right - tb.Left + pad),
-                h - Px(p.MarginBottom, scale));
-            if (!r.IsEmpty) pills.Add(new Pill(r, Radius(p.CornerRadius, scale, r), "apps"));
+            int pad = Px(ap.PaddingX, scale);
+            // Padding is applied in full on both sides; the pill may extend past the screen
+            // edge (the window region clips it) rather than silently losing padding on one side.
+            appsRect = new RECT(
+                g.Apps.Left - tb.Left - pad,
+                Px(ap.MarginTop, scale),
+                g.Apps.Right - tb.Left + pad,
+                h - Px(ap.MarginBottom, scale));
         }
 
-        if (includeTray && g.HasTray)
+        if (hasTray)
         {
-            var p = s.Tray;
-            int pad = Px(p.PaddingX, scale);
-            int edgeGap = Px(Math.Max(p.MarginBottom, 4), scale);
-            var r = new RECT(
-                Math.Max(0, g.Tray.Left - tb.Left - pad),
-                Px(p.MarginTop, scale),
-                Math.Min(w - edgeGap, g.Tray.Right - tb.Left + pad),
-                h - Px(p.MarginBottom, scale));
+            int pad = Px(tp.PaddingX, scale);
+            // Tray pill is attached to the screen edge: no right padding, so the Show Desktop
+            // sliver at the far right stays inside the pill.
+            trayRect = new RECT(
+                g.Tray.Left - tb.Left - pad,
+                Px(tp.MarginTop, scale),
+                w,
+                h - Px(tp.MarginBottom, scale));
+        }
 
-            // Never let the tray pill overlap the apps pill.
-            var apps = pills.FirstOrDefault(x => x.Kind == "apps");
-            if (apps.Kind is not null && r.Left < apps.Rect.Right + pad)
-                r.Left = apps.Rect.Right + pad;
+        // Where the pills would overlap, split the difference so both keep a small gap.
+        if (g.HasApps && hasTray && trayRect.Left < appsRect.Right + Px(GapDips, scale))
+        {
+            int gap = Px(GapDips, scale);
+            int mid = (Math.Max(trayRect.Left, appsRect.Left) + Math.Min(appsRect.Right, trayRect.Right)) / 2;
+            appsRect.Right = mid - gap / 2;
+            trayRect.Left = mid + (gap - gap / 2);
+        }
 
-            if (!r.IsEmpty) pills.Add(new Pill(r, Radius(p.CornerRadius, scale, r), "tray"));
+        if (g.HasApps)
+        {
+            var r = appsRect;
+            r.Left = Math.Max(0, r.Left);   // clip to the window only after the overlap resolution
+            r.Right = Math.Min(w, r.Right);
+            if (!r.IsEmpty) pills.Add(new Pill(r, Radius(ap.CornerRadius, scale, r), "apps"));
+        }
+
+        if (hasTray)
+        {
+            var r = trayRect;
+            r.Left = Math.Max(0, r.Left);
+            if (!r.IsEmpty) pills.Add(new Pill(r, Radius(tp.CornerRadius, scale, r), "tray"));
         }
 
         return pills;
     }
+
+    const double GapDips = 4;
 
     static int Px(double dips, double scale) => (int)Math.Round(dips * scale);
 

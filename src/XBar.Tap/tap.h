@@ -80,6 +80,7 @@ namespace xbar
         void SetOpacity(TaskbarState& tb, double value, double ms);
         void ApplyFloat(TaskbarState& tb, double px);
         wuxm::Brush MakeMaterial(TaskbarState& tb, const Look& look);
+        void DecorateLiquid(wuxc::Border& pill, double radius, double scale, const Look& look);
         void DumpTree();
         void SetOwner(DWORD pid);
 

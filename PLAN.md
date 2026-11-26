@@ -58,7 +58,7 @@ Verified live on this machine:
 - Split apps + tray pills with anti-aliased corners and an outline, driven by the TAP.
 - Click-through outside the pills.
 - Hidden over a fullscreen game.
-- Materials: blur, clear + glow, acrylic + gradient, all applied live from settings.
+- Materials: liquid glass (default; blur + saturation + specular rim/bevel), blur, clear + glow, acrylic + gradient, all applied live from settings.
 - Float height.
 - Peek hotkey, panic hotkey, pause/resume.
 - Safety: watchdog restore after `taskkill /f`, next-launch recovery, TAP self-restore when XBar dies, TAP version handover.

@@ -362,6 +362,15 @@ wuxm::Brush Tap::MakeMaterial(TaskbarState& tb, const Look& look)
         return Solid({ 0xFF, c.R, c.G, c.B });
     if (look.accent == L"clear")
         return Solid(c);
+    if (look.accent == L"liquid")
+    {
+        // Liquid glass: backdrop -> light blur (frost) -> saturation boost -> white-ish tint.
+        // (The web version also refracts the backdrop with an SVG displacement map; XAML composition
+        // effects cannot displace pixels, so the bending is imitated by the rim/bevel in Apply.)
+        auto compositor = wuxh::ElementCompositionPreview::GetElementVisual(tb.frame).Compositor();
+        const wfn::float4 tint{ c.R / 255.f, c.G / 255.f, c.B / 255.f, c.A / 255.f };
+        return winrt::make<XamlBlurBrush>(compositor, static_cast<float>(std::max(0.0, look.blur / 3.0)), tint, 1.7f);
+    }
     if (look.accent == L"blur")
     {
         auto compositor = wuxh::ElementCompositionPreview::GetElementVisual(tb.frame).Compositor();
@@ -375,6 +384,70 @@ wuxm::Brush Tap::MakeMaterial(TaskbarState& tb, const Look& look)
     acrylic.TintOpacity(c.A / 255.0);
     acrylic.FallbackColor(c);
     return acrylic;
+}
+
+namespace
+{
+    // Diagonal light-catching gradient: bright where the "light" (top-left) and its opposite (bottom-right)
+    // hit the rim, faint along the other two sides. Mirrors the specular term of the web component.
+    wuxm::LinearGradientBrush RimBrush(wuc_::Color base, double top, double mid, double bottom)
+    {
+        auto stop = [&](double off, double k)
+        {
+            wuxm::GradientStop g;
+            g.Offset(off);
+            g.Color({ static_cast<uint8_t>(std::clamp(base.A * k, 0.0, 255.0)), base.R, base.G, base.B });
+            return g;
+        };
+        wuxm::LinearGradientBrush b;
+        b.StartPoint({ 0.0f, 0.0f });
+        b.EndPoint({ 1.0f, 1.0f });
+        b.GradientStops().Append(stop(0.0, top));
+        b.GradientStops().Append(stop(0.30, mid));
+        b.GradientStops().Append(stop(0.70, mid));
+        b.GradientStops().Append(stop(1.0, bottom));
+        return b;
+    }
+}
+
+// Liquid glass chrome: a bright specular rim plus a few fading inner rings (the bevel band where the web
+// version bends light) and a soft sheen over the upper half.
+void Tap::DecorateLiquid(wuxc::Border& pill, double radius, double scale, const Look& look)
+{
+    const auto rim = look.border ? look.borderColor : wuc_::Color{ 0, 255, 255, 255 };
+    const double th = std::max(1.0, look.borderW / scale);
+    pill.BorderThickness(wux::ThicknessHelper::FromUniformLength(th));
+    pill.BorderBrush(RimBrush(rim, 1.0, 0.25, 0.75));
+
+    // Nested rings, each inside the previous one: alpha fades towards the centre.
+    constexpr double ringAlpha[] = { 0.55, 0.32, 0.18, 0.08 };
+    wuxc::Border outer{ nullptr }, inner{ nullptr };
+    double rr = std::max(0.0, radius - th);
+    for (double a : ringAlpha)
+    {
+        wuxc::Border ring;
+        ring.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(rr));
+        ring.BorderThickness(wux::ThicknessHelper::FromUniformLength(1.0));
+        ring.BorderBrush(RimBrush({ 0x60, 0xFF, 0xFF, 0xFF }, a * 2.0, a * 0.5, a * 1.4));
+        if (!outer) outer = ring; else inner.Child(ring);
+        inner = ring;
+        rr = std::max(0.0, rr - 1.0);
+    }
+
+    // Sheen: white fading out over the top half.
+    wuxm::LinearGradientBrush sheen;
+    sheen.StartPoint({ 0.5f, 0.0f });
+    sheen.EndPoint({ 0.5f, 1.0f });
+    wuxm::GradientStop s0; s0.Offset(0.0); s0.Color({ 0x30, 0xFF, 0xFF, 0xFF });
+    wuxm::GradientStop s1; s1.Offset(0.55); s1.Color({ 0x00, 0xFF, 0xFF, 0xFF });
+    sheen.GradientStops().Append(s0);
+    sheen.GradientStops().Append(s1);
+    wuxc::Border sheenLayer;
+    sheenLayer.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(rr));
+    sheenLayer.Background(sheen);
+    inner.Child(sheenLayer);
+
+    pill.Child(outer);
 }
 
 void Tap::Apply(TaskbarState& tb, const Look& look)
@@ -459,12 +532,17 @@ void Tap::Apply(TaskbarState& tb, const Look& look)
         pill.Height(h);
         pill.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(r));
         pill.Background(MakeMaterial(tb, look));
-        if (look.border)
+        const bool liquid = look.accent == L"liquid";
+        if (liquid)
+        {
+            DecorateLiquid(pill, r, scale, look);
+        }
+        else if (look.border)
         {
             pill.BorderThickness(wux::ThicknessHelper::FromUniformLength(std::max(0.5, look.borderW / scale)));
             pill.BorderBrush(Solid(bc));
         }
-        if (look.gradient)
+        if (look.gradient && !liquid)
         {
             const double a = look.gradientAngle * 3.14159265358979 / 180.0;
             wuxm::LinearGradientBrush g;

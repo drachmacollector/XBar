@@ -10,7 +10,7 @@
 class XamlBlurBrush : public wux::Media::XamlCompositionBrushBaseT<XamlBlurBrush>
 {
 public:
-	XamlBlurBrush(wuc::Compositor compositor, float blurAmount, wfn::float4 tint);
+	XamlBlurBrush(wuc::Compositor compositor, float blurAmount, wfn::float4 tint, float saturation = 1.0f);
 
 	void OnConnected();
 	void OnDisconnected();
@@ -19,4 +19,5 @@ private:
 	wuc::Compositor m_compositor;
 	float m_blurAmount;
 	wfn::float4 m_tint;
+	float m_saturation;
 };

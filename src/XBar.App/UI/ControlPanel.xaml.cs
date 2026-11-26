@@ -325,6 +325,17 @@ public partial class ControlPanel : Window
                 BorderThickness = new Thickness(preset.Border is null ? 0 : 1),
                 BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(ba, br, bg, bb)),
             };
+            if (preset.Look.Accent == XBar.Core.Config.AccentMode.Liquid && preview.Child is Border lg)
+            {
+                lg.BorderBrush = new System.Windows.Media.LinearGradientBrush(
+                    new System.Windows.Media.GradientStopCollection
+                    {
+                        new(System.Windows.Media.Color.FromArgb(0xE0, 255, 255, 255), 0), new(System.Windows.Media.Color.FromArgb(0x40, 255, 255, 255), 0.35),
+                        new(System.Windows.Media.Color.FromArgb(0x40, 255, 255, 255), 0.65), new(System.Windows.Media.Color.FromArgb(0xC0, 255, 255, 255), 1),
+                    }, new System.Windows.Point(0, 0), new System.Windows.Point(1, 1));
+                lg.BorderThickness = new Thickness(1.5);
+                lg.CornerRadius = new CornerRadius(9);
+            }
             var button = new Button
             {
                 Margin = new Thickness(0, 0, 10, 10), Padding = new Thickness(8),

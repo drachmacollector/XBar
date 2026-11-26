@@ -36,6 +36,32 @@ public sealed class TaskbarPreview : Border
         Redraw();
     }
 
+    /// <summary>Liquid-glass chrome for the mock-up: diagonal specular rim + sheen (the real bar does this in the TAP).</summary>
+    static void LiquidChrome(Border pill, byte r, byte g, byte b, byte a)
+    {
+        GradientBrush Rim(double top, double mid, double bottom)
+        {
+            Color C(double k) => Color.FromArgb((byte)Math.Clamp(a * k, 0, 255), r, g, b);
+            return new LinearGradientBrush(new GradientStopCollection
+            {
+                new(C(top), 0), new(C(mid), 0.30), new(C(mid), 0.70), new(C(bottom), 1),
+            }, new Point(0, 0), new Point(1, 1));
+        }
+        pill.BorderThickness = new Thickness(1.2);
+        pill.BorderBrush = Rim(1.0, 0.25, 0.75);
+        pill.Child = new Border
+        {
+            CornerRadius = new CornerRadius(Math.Max(0, pill.CornerRadius.TopLeft - 1)),
+            BorderThickness = new Thickness(1),
+            BorderBrush = new LinearGradientBrush(new GradientStopCollection
+            {
+                new(Color.FromArgb(0x40, 255, 255, 255), 0), new(Color.FromArgb(0x10, 255, 255, 255), 0.4),
+                new(Color.FromArgb(0x10, 255, 255, 255), 0.7), new(Color.FromArgb(0x30, 255, 255, 255), 1),
+            }, new Point(0, 0), new Point(1, 1)),
+            Background = new LinearGradientBrush(Color.FromArgb(0x30, 255, 255, 255), Color.FromArgb(0, 255, 255, 255), 90),
+        };
+    }
+
     void Redraw()
     {
         _canvas.Children.Clear();
@@ -103,6 +129,7 @@ public sealed class TaskbarPreview : Border
             AccentMode.Normal => new SolidColorBrush(Color.FromArgb(0xD8, 0x20, 0x20, 0x20)),
             AccentMode.Opaque => new SolidColorBrush(Color.FromRgb(r, g, b)),
             AccentMode.Clear => new SolidColorBrush(Color.FromArgb(a, r, g, b)),
+            AccentMode.Liquid => new SolidColorBrush(Color.FromArgb((byte)Math.Max((int)a, 0x24), r, g, b)),
             _ => new SolidColorBrush(Color.FromArgb((byte)Math.Max((int)a, 0x50), r, g, b)),
         };
         if (s.Style.GradientEnabled && look.Accent != AccentMode.Normal)
@@ -124,7 +151,9 @@ public sealed class TaskbarPreview : Border
                 BorderThickness = new Thickness(s.Style.BorderEnabled ? Math.Max(0.5, s.Style.BorderThickness) : 0),
                 BorderBrush = new SolidColorBrush(Color.FromArgb(ba, br, bg, bb)),
             };
-            if (look.Accent is AccentMode.Blur or AccentMode.Acrylic)
+            if (look.Accent == AccentMode.Liquid)
+                LiquidChrome(rect, br, bg, bb, ba);
+            else if (look.Accent is AccentMode.Blur or AccentMode.Acrylic)
             {
                 // Hint of frost
                 rect.Background = fill;

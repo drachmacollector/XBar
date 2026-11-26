@@ -5,7 +5,7 @@ A floating, rounded, translucent **overlay** taskbar for Windows 11.
 - **True overlay:** maximised and snapped windows use the whole screen; the taskbar
   floats on top of them (apps pill + tray pill), and clicks outside the pills reach the app below.
 - **Shape:** split pills (apps + tray) or one floating bar; radius, margins, padding, float height.
-- **Style:** normal / opaque / clear / blur / acrylic, tint colour with alpha, outline, glow,
+- **Style:** **liquid glass (default)** / normal / opaque / clear / blur / acrylic, tint colour with alpha, outline, glow,
   shadow, gradient, accent-colour sync, separate light-theme look.
 - **Dynamic looks:** desktop, window open, window maximised, Start, Search, Task View.
 - **Behaviour:** hides over fullscreen games and video, peek-through hotkey, idle dim,

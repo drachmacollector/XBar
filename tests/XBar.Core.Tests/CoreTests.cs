@@ -132,7 +132,7 @@ public class ParsingTests
         var text = spec.Serialize();
         Assert.Contains("hwnd=42;", text);
         Assert.Contains("pills=1,2,3,4,5;", text);
-        Assert.Contains("accent=acrylic;", text);
+        Assert.Contains("accent=liquid;", text);
     }
 }
 

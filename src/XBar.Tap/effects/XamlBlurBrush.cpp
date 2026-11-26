@@ -4,11 +4,13 @@
 #include "CompositeEffect.h"
 #include "FloodEffect.h"
 #include "GaussianBlurEffect.h"
+#include "SaturationEffect.h"
 
-XamlBlurBrush::XamlBlurBrush(wuc::Compositor compositor, float blurAmount, wfn::float4 tint) :
+XamlBlurBrush::XamlBlurBrush(wuc::Compositor compositor, float blurAmount, wfn::float4 tint, float saturation) :
 	m_compositor(std::move(compositor)),
 	m_blurAmount(blurAmount),
-	m_tint(tint)
+	m_tint(tint),
+	m_saturation(saturation)
 { }
 
 void XamlBlurBrush::OnConnected()
@@ -25,7 +27,18 @@ void XamlBlurBrush::OnConnected()
 		floodEffect->Color = m_tint;
 
 		auto compositeEffect = winrt::make_self<CompositeEffect>();
-		compositeEffect->Sources.push_back(*blurEffect);
+		if (m_saturation != 1.0f)
+		{
+			// backdrop -> blur -> saturate (liquid glass), then the tint on top
+			auto satEffect = winrt::make_self<SaturationEffect>();
+			satEffect->Source = *blurEffect;
+			satEffect->Saturation = m_saturation;
+			compositeEffect->Sources.push_back(*satEffect);
+		}
+		else
+		{
+			compositeEffect->Sources.push_back(*blurEffect);
+		}
 		compositeEffect->Sources.push_back(*floodEffect);
 		compositeEffect->Mode = D2D1_COMPOSITE_MODE_SOURCE_OVER;
 

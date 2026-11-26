@@ -504,8 +504,21 @@ public sealed class XBarEngine : IDisposable
                 _geometryBusy = false;
                 if (t.IsFaulted || Paused) return;
                 bool changed = false;
-                foreach (var (h, g) in t.Result)
+                foreach (var (h0, g0) in t.Result)
                 {
+                    var h = h0; var g = g0;
+                    if (_geometry.TryGetValue(h, out var prev))
+                    {
+                        // While the Start menu / Search / Task View has focus, Explorer's UI Automation tree can
+                        // come back without the app buttons or tray. The taskbar always has both, so an empty
+                        // read means "couldn't see them": keep the last good rect instead of dropping the pill.
+                        bool keepApps = !g.HasApps && prev.HasApps, keepTray = !g.HasTray && prev.HasTray;
+                        if (keepApps || keepTray)
+                        {
+                            Log.Debug($"Geometry read incomplete (apps empty={keepApps}, tray empty={keepTray}); keeping the last known rects");
+                            g = g with { Apps = keepApps ? prev.Apps : g.Apps, Tray = keepTray ? prev.Tray : g.Tray };
+                        }
+                    }
                     if (!_geometry.TryGetValue(h, out var old) || old != g)
                     {
                         _geometry[h] = g;

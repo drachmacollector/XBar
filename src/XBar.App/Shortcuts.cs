@@ -33,14 +33,14 @@ public static class Shortcuts
         {
             var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "XBar");
             Directory.CreateDirectory(dir);
-            CreateLink(Path.Combine(dir, "XBar.lnk"), ExePath, "", "XBar control panel");
-            CreateLink(Path.Combine(dir, "XBar - Restore taskbar.lnk"), ExePath, "--restore", "Put the taskbar back to normal right now");
-            CreateLink(Path.Combine(dir, "XBar - Safe mode.lnk"), ExePath, "--safe", "Start XBar without applying any changes");
+            CreateLink(Path.Combine(dir, "XBar.lnk"), ExePath, "", "XBar control panel", null);
+            CreateLink(Path.Combine(dir, "XBar - Restore taskbar.lnk"), ExePath, "--restore", "Put the taskbar back to normal right now", "restore.ico");
+            CreateLink(Path.Combine(dir, "XBar - Safe mode.lnk"), ExePath, "--safe", "Start XBar without applying any changes", "safe.ico");
         }
         catch (Exception ex) { Log.Warn($"Start menu shortcuts: {ex.Message}"); }
     }
 
-    static void CreateLink(string lnk, string target, string args, string description)
+    static void CreateLink(string lnk, string target, string args, string description, string? icon)
     {
         var shellType = Type.GetTypeFromProgID("WScript.Shell");
         if (shellType is null) return;
@@ -50,7 +50,8 @@ public static class Shortcuts
         link.Arguments = args;
         link.Description = description;
         link.WorkingDirectory = Path.GetDirectoryName(target);
-        link.IconLocation = target + ",0";
+        var iconFile = icon is null ? null : Path.Combine(AppContext.BaseDirectory, "icons", icon);
+        link.IconLocation = iconFile is not null && File.Exists(iconFile) ? iconFile : target + ",0";
         link.Save();
     }
 }

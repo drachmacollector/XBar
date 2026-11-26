@@ -1,7 +1,7 @@
 ; XBar installer (Inno Setup 6) - GPL-3.0-or-later
 ; Build with tools\make-installer.ps1, which stages the files and passes /DAppVersion=... /DSourceDir=...
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.1.0"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\artifacts\stage"

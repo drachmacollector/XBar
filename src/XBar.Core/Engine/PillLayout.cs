@@ -20,7 +20,9 @@ public readonly record struct Pill(RECT Rect, int Radius, string Kind);
 /// </summary>
 public static class PillLayout
 {
-    public static List<Pill> Compute(TaskbarGeometry g, ShapeSettings s, double scale, bool includeTray, bool fillEdgeToEdge)
+    /// <param name="liftPx">Gap kept under the pills (float). Pills are centred in the strip above it,
+    /// so the content only has to move up by half of this to stay centred inside them.</param>
+    public static List<Pill> Compute(TaskbarGeometry g, ShapeSettings s, double scale, bool includeTray, bool fillEdgeToEdge, int liftPx = 0)
     {
         var pills = new List<Pill>();
         var tb = g.Taskbar;
@@ -42,8 +44,7 @@ public static class PillLayout
         if (s.Mode == ShapeMode.Single)
         {
             var p = s.Apps;
-            int top = Px(p.MarginTop, scale);
-            int bottom = h - Px(p.MarginBottom, scale);
+            var (top, bottom) = Vertical(p, h, scale, liftPx);
             int mx = Px(s.SingleMarginX, scale);
             var r = new RECT(mx, top, w - mx, bottom);
             if (!r.IsEmpty) pills.Add(new Pill(r, Radius(p.CornerRadius, scale, r), "single"));
@@ -57,6 +58,9 @@ public static class PillLayout
         var ap = s.Apps;
         var tp = s.Tray;
 
+        var (aTop, aBottom) = Vertical(ap, h, scale, liftPx);
+        var (tTop, tBottom) = Vertical(tp, h, scale, liftPx);
+
         if (g.HasApps)
         {
             int pad = Px(ap.PaddingX, scale);
@@ -64,9 +68,9 @@ public static class PillLayout
             // edge (the window region clips it) rather than silently losing padding on one side.
             appsRect = new RECT(
                 g.Apps.Left - tb.Left - pad,
-                Px(ap.MarginTop, scale),
+                aTop,
                 g.Apps.Right - tb.Left + pad,
-                h - Px(ap.MarginBottom, scale));
+                aBottom);
         }
 
         if (hasTray)
@@ -76,9 +80,9 @@ public static class PillLayout
             // sliver at the far right stays inside the pill.
             trayRect = new RECT(
                 g.Tray.Left - tb.Left - pad,
-                Px(tp.MarginTop, scale),
+                tTop,
                 w,
-                h - Px(tp.MarginBottom, scale));
+                tBottom);
         }
 
         // Where the pills would overlap, split the difference so both keep a small gap.
@@ -109,6 +113,15 @@ public static class PillLayout
     }
 
     const double GapDips = 4;
+
+    /// <summary>Vertical extent of a pill: its height, capped to the strip above the float gap, centred in it.</summary>
+    static (int Top, int Bottom) Vertical(PillSettings p, int taskbarHeight, double scale, int liftPx)
+    {
+        int strip = Math.Max(0, taskbarHeight - Math.Max(0, liftPx));
+        int height = Math.Clamp(Px(p.Height, scale), 0, strip);
+        int top = (strip - height) / 2;
+        return (top, top + height);
+    }
 
     static int Px(double dips, double scale) => (int)Math.Round(dips * scale);
 

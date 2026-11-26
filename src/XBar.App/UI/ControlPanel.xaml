@@ -130,7 +130,7 @@
                                     <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Shape.ShowTray}" />
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Float height" Tag="Lift the pills above the screen edge (needs the styling module).">
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Float height" Tag="Gap under the pills, lifting them off the screen edge. The pills lose that much height, so keep it small for tall pills (needs the styling module).">
                                     <StackPanel Orientation="Horizontal">
                                         <Slider x:Name="FloatSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding Shape.FloatOffset}" />
                                         <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=FloatSlider, StringFormat={}{0:0}}" />
@@ -160,17 +160,10 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Top margin">
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Height">
                                     <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="AppsTop" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginTop}" />
-                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsTop, StringFormat={}{0:0}}" />
-                                    </StackPanel>
-                                </HeaderedContentControl>
-                                <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom margin">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="AppsBottom" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginBottom}" />
-                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsBottom, StringFormat={}{0:0}}" />
+                                        <Slider x:Name="AppsHeight" Style="{StaticResource ValueSlider}" Minimum="24" Maximum="48" TickFrequency="1" Value="{Binding Height}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=AppsHeight, StringFormat={}{0:0}}" />
                                     </StackPanel>
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
@@ -193,17 +186,10 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Top margin">
+                                <HeaderedContentControl Style="{StaticResource Row}" Header="Height">
                                     <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="TrayTop" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginTop}" />
-                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayTop, StringFormat={}{0:0}}" />
-                                    </StackPanel>
-                                </HeaderedContentControl>
-                                <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Bottom margin">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="TrayBottom" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding MarginBottom}" />
-                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayBottom, StringFormat={}{0:0}}" />
+                                        <Slider x:Name="TrayHeight" Style="{StaticResource ValueSlider}" Minimum="24" Maximum="48" TickFrequency="1" Value="{Binding Height}" />
+                                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=TrayHeight, StringFormat={}{0:0}}" />
                                     </StackPanel>
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />

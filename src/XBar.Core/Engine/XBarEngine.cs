@@ -422,17 +422,15 @@ public sealed class XBarEngine : IDisposable
         if (geo.Taskbar.IsEmpty) geo = new TaskbarGeometry(tb.Rect, default, default);
         geo = geo with { Taskbar = tb.Rect };
 
-        var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill);
-
-        // Float: the pill keeps its top edge (the window can't grow upwards) and its bottom rises by
-        // `lift`, leaving a gap under it; the icons are moved up by half that so they stay centred.
-        // Only possible with the TAP (it moves the XAML content); clamp so a usable pill remains.
-        int lift = Appearance.IsAvailable && !fill ? (int)Math.Round(shape.FloatOffset * tb.Scale) : 0;
-        if (lift > 0 && pills.Count > 0)
-            lift = Math.Min(lift, pills.Min(p => p.Rect.Height) - (int)(32 * tb.Scale));
-        lift = Math.Max(0, lift);
+        // Float: the bar's window can't grow, so floating leaves a gap under the pills and the pills
+        // (centred in the strip above it) lose that much height. The icons are moved up by half the
+        // gap so they stay centred. Only possible with the TAP (it moves the XAML content); the strip
+        // never shrinks below a usable 32 DIP.
+        int lift = Appearance.IsAvailable && !fill && shape.Mode != ShapeMode.Stock ? (int)Math.Round(shape.FloatOffset * tb.Scale) : 0;
+        lift = Math.Clamp(lift, 0, Math.Max(0, tb.Rect.Height - (int)(32 * tb.Scale)));
         int contentShift = lift / 2;
-        pills = pills.Select(p => { var r = p.Rect; r.Bottom -= lift; return p with { Rect = r, Radius = Math.Min(p.Radius, r.Height / 2) }; }).ToList();
+
+        var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill, lift);
 
         // The window region is the hit-test + clip mask. When the TAP paints anti-aliased pills
         // (with shadow/glow), the mask must be a little larger than the pills.

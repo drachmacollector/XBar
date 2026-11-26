@@ -22,14 +22,29 @@ public class PillLayoutTests
         Assert.Equal("apps", apps.Kind);
         Assert.Equal(738 - 8, apps.Rect.Left);   // padding 6 DIP * 1.25 = 7.5 -> 8
         Assert.Equal(1208 + 8, apps.Rect.Right);
-        Assert.Equal(5, apps.Rect.Top);           // margin 4 * 1.25
-        Assert.Equal(60 - 5, apps.Rect.Bottom);
+        Assert.Equal(55, apps.Rect.Height);       // height 44 DIP * 1.25, centred in the 60 px bar
+        Assert.Equal(2, apps.Rect.Top);
+        Assert.Equal(57, apps.Rect.Bottom);
         Assert.True(apps.Radius <= apps.Rect.Height / 2);
 
         var tray = pills[1];
         Assert.Equal("tray", tray.Kind);
         Assert.Equal(1920, tray.Rect.Right);     // attached to the screen edge
         Assert.True(tray.Rect.Left > apps.Rect.Right);
+    }
+
+    [Fact]
+    public void Float_gap_shrinks_and_centres_pills_in_the_strip_above_it()
+    {
+        var s = new ShapeSettings();
+        s.Apps.Height = 48; s.Tray.Height = 30;           // 48 DIP = 60 px, 30 DIP = 37.5 -> 38 px
+        var pills = PillLayout.Compute(new TaskbarGeometry(Tb, Apps, Tray), s, 1.25, true, false, liftPx: 20);
+        var apps = pills[0]; var tray = pills[1];
+        Assert.Equal(40, apps.Rect.Height);               // capped to 60 - 20
+        Assert.Equal(0, apps.Rect.Top);
+        Assert.Equal(38, tray.Rect.Height);
+        Assert.Equal(1, tray.Rect.Top);                   // centred in the 40 px strip
+        Assert.Equal(1 + 38, tray.Rect.Bottom);
     }
 
     [Fact]

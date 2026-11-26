@@ -49,8 +49,8 @@ public sealed class OverlaySettings
 public sealed class PillSettings
 {
     public double CornerRadius { get; set; } = 12;
-    public double MarginTop { get; set; } = 4;
-    public double MarginBottom { get; set; } = 4;
+    /// <summary>Pill height in DIPs. Capped at what is left of the taskbar after the float gap.</summary>
+    public double Height { get; set; } = 44;
     /// <summary>Extra horizontal space around the content.</summary>
     public double PaddingX { get; set; } = 6;
 }

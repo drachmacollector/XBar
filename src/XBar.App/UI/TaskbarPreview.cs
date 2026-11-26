@@ -93,8 +93,9 @@ public sealed class TaskbarPreview : Border
         var tbRect = new RECT(0, 0, (int)ScreenW, (int)BarH);
         var apps = new RECT((int)(ScreenW - appsW) / 2, 0, (int)(ScreenW + appsW) / 2, (int)BarH);
         var tray = new RECT((int)ScreenW - 240, 0, (int)ScreenW - 14, (int)BarH);
+        int lift = s.Shape.Mode == ShapeMode.Stock ? 0 : (int)Math.Clamp(s.Shape.FloatOffset, 0, BarH - 32);
         var pills = PillLayout.Compute(new TaskbarGeometry(tbRect, apps, tray), s.Shape, 1.0, s.Shape.ShowTray,
-            s.Shape.Mode == ShapeMode.Single && s.Shape.FillWhenMaximized && _maximized);
+            s.Shape.Mode == ShapeMode.Single && s.Shape.FillWhenMaximized && _maximized, lift);
 
         var (a, r, g, b) = ColorText.Parse(look.Color, (0x80, 0x10, 0x10, 0x10));
         Brush fill = look.Accent switch
@@ -112,7 +113,6 @@ public sealed class TaskbarPreview : Border
         }
         var (ba, br, bg, bb) = ColorText.Parse(s.Style.BorderColor, (0x33, 255, 255, 255));
 
-        double lift = s.Shape.FloatOffset * scale;
         foreach (var p in pills)
         {
             var rect = new Border
@@ -135,7 +135,7 @@ public sealed class TaskbarPreview : Border
             else if (s.Style.GlowEnabled)
                 rect.Effect = new DropShadowEffect { BlurRadius = 14, Opacity = 0.8, ShadowDepth = 0, Color = Color.FromRgb(br, bg, bb) };
             Canvas.SetLeft(rect, p.Rect.Left * scale);
-            Canvas.SetTop(rect, barTop + p.Rect.Top * scale - lift);
+            Canvas.SetTop(rect, barTop + p.Rect.Top * scale);
             _canvas.Children.Add(rect);
 
             // Fake icons
@@ -150,7 +150,7 @@ public sealed class TaskbarPreview : Border
                         Fill = new SolidColorBrush(i == 0 ? Color.FromRgb(0x3b, 0xa8, 0xf0) : Color.FromArgb(220, (byte)(120 + i * 12), (byte)(200 - i * 10), (byte)(140 + i * 9))),
                     };
                     Canvas.SetLeft(ic, startX + i * 44 * scale);
-                    Canvas.SetTop(ic, barTop + (BarH - 22) / 2 * scale - lift);
+                    Canvas.SetTop(ic, barTop + (BarH - lift - 22) / 2 * scale);
                     _canvas.Children.Add(ic);
                 }
             }
@@ -158,7 +158,7 @@ public sealed class TaskbarPreview : Border
             {
                 var t = new TextBlock { Text = "ENG   ⌔  🔊  80%   12:30", Foreground = Brushes.White, FontSize = Math.Max(8, 12 * scale) };
                 Canvas.SetLeft(t, (tray.Left + 16) * scale);
-                Canvas.SetTop(t, barTop + (BarH - 16) / 2 * scale - lift);
+                Canvas.SetTop(t, barTop + (BarH - lift - 16) / 2 * scale);
                 _canvas.Children.Add(t);
             }
         }

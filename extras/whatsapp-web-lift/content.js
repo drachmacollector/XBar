@@ -18,7 +18,7 @@
       document.head.appendChild(style);
     }
     style.textContent = px
-      ? `#main footer { margin-bottom: ${px}px !important; }`
+      ? `#main footer, #app footer { margin-bottom: ${px}px !important; }`
       : "";
   }
 

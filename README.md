@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/drachmacollector/My-Taskbar/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/drachmacollector/XBar/releases/latest"><b>Download</b></a> ·
   <a href="#features">Features</a> ·
   <a href="#hotkeys">Hotkeys</a> ·
   <a href="#if-something-goes-wrong">Troubleshooting</a> ·
@@ -38,7 +38,7 @@ working. It does not replace Explorer or ask for administrator rights.
 
 ## Install
 
-1. Download **`XBar-Setup-<version>.exe`** from the [latest release](https://github.com/drachmacollector/My-Taskbar/releases/latest).
+1. Download **`XBar-Setup-<version>.exe`** from the [latest release](https://github.com/drachmacollector/XBar/releases/latest).
 2. Run it. It installs for your user account only, needs no admin rights, and bundles everything it needs (no separate .NET install).
 3. Open XBar from the Start menu or the tray icon, and use the control panel to shape the bar.
 

@@ -114,6 +114,19 @@ public static class PillLayout
 
     const double GapDips = 4;
 
+    /// <summary>
+    /// The float gap actually used. Pill height wins: the gap is whatever the taskbar window has left
+    /// under the tallest pill, so raising the height can reduce the float but never shrinks the pill.
+    /// </summary>
+    public static int EffectiveLift(ShapeSettings s, int taskbarHeightPx, double scale)
+    {
+        if (s.Mode == ShapeMode.Stock) return 0;
+        double tallest = s.Apps.Height;
+        if (s.Mode == ShapeMode.Split && s.ShowTray) tallest = Math.Max(tallest, s.Tray.Height);
+        int room = Math.Max(0, taskbarHeightPx - Px(tallest, scale));
+        return Math.Clamp(Px(s.FloatOffset, scale), 0, room);
+    }
+
     /// <summary>Vertical extent of a pill: its height, capped to the strip above the float gap, centred in it.</summary>
     static (int Top, int Bottom) Vertical(PillSettings p, int taskbarHeight, double scale, int liftPx)
     {

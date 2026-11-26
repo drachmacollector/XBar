@@ -48,6 +48,21 @@ public class PillLayoutTests
     }
 
     [Fact]
+    public void Float_is_capped_so_the_tallest_pill_keeps_its_height()
+    {
+        var s = new ShapeSettings { FloatOffset = 16 };
+        s.Apps.Height = 44; s.Tray.Height = 40;
+        // 48 DIP bar at 1.25 = 60 px; tallest pill 44 DIP = 55 px -> only 5 px of float left
+        Assert.Equal(5, PillLayout.EffectiveLift(s, 60, 1.25));
+        s.Apps.Height = 30; s.Tray.Height = 30;
+        Assert.Equal(20, PillLayout.EffectiveLift(s, 60, 1.25));   // 16 DIP * 1.25, fits
+        s.Apps.Height = 48; s.Tray.Height = 48;
+        Assert.Equal(0, PillLayout.EffectiveLift(s, 60, 1.25));
+        s.Tray.Height = 48; s.Apps.Height = 30; s.ShowTray = false;  // hidden tray doesn't count
+        Assert.Equal(20, PillLayout.EffectiveLift(s, 60, 1.25));
+    }
+
+    [Fact]
     public void Tray_hidden_when_not_included()
     {
         var pills = PillLayout.Compute(new TaskbarGeometry(Tb, Apps, Tray), new ShapeSettings(), 1.0, false, false);

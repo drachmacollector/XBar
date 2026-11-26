@@ -14,7 +14,8 @@ namespace XBar.App.UI;
 public partial class ControlPanel : Window
 {
     readonly AppHost _host;
-    readonly DispatcherTimer _editDebounce = new() { Interval = TimeSpan.FromMilliseconds(120) };
+    readonly DispatcherTimer _editThrottle = new(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(33) };
+    bool _dirty, _previewQueued;
     readonly DispatcherTimer _diagTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     bool _loading;
 
@@ -53,7 +54,11 @@ public partial class ControlPanel : Window
         AddHandler(Selector.SelectionChangedEvent, new SelectionChangedEventHandler(OnSelection));
         AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler(OnEdited));
         AddHandler(ColorField.ColorChangedEvent, new RoutedEventHandler(OnEdited));
-        _editDebounce.Tick += (_, _) => { _editDebounce.Stop(); Commit(); };
+        _editThrottle.Tick += (_, _) =>
+        {
+            if (_dirty) { _dirty = false; Commit(); }
+            else _editThrottle.Stop();   // nothing new since the last tick: the drag is over
+        };
 
         _diagTimer.Tick += (_, _) => RefreshDiagnostics();
         _host.StatusChanged += RefreshStatus;
@@ -64,6 +69,9 @@ public partial class ControlPanel : Window
             if (_host.Tap is not null) _host.Tap.Changed -= RefreshStatus;
             _diagTimer.Stop();
         };
+
+        foreach (var preview in new[] { HomePreview, ShapePreview, StylePreview })
+            preview.IsVisibleChanged += (_, _) => RefreshPreviews();   // draw when its page is shown
 
         VersionText.Text = $"XBar {typeof(App).Assembly.GetName().Version?.ToString(3)}";
         BuildPresets();
@@ -105,11 +113,15 @@ public partial class ControlPanel : Window
     void OnEdited(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
+        // ScrollBars are RangeBases too: scrolling the page must not re-apply the settings.
+        if (e.OriginalSource is ScrollBar) return;
         if (e.OriginalSource == RunAtLogin || e.OriginalSource == PreviewMaximized || e.OriginalSource == ProfileName) return;
         if (e.OriginalSource is TextBox tb && (tb.IsReadOnly && tb is not HotkeyBox)) return;
-        RefreshPreviews();
-        _editDebounce.Stop();
-        _editDebounce.Start();
+        QueuePreviews();
+        // Throttle, not debounce: apply while the slider is still moving (<= ~30 times a second)
+        // so the taskbar follows the thumb instead of jumping once the drag pauses.
+        _dirty = true;
+        if (!_editThrottle.IsEnabled) _editThrottle.Start();
     }
 
     void Commit()
@@ -120,11 +132,32 @@ public partial class ControlPanel : Window
             : "";
     }
 
+    /// <summary>The taskbar window is 48 DIP tall and can't grow, so the float gap can only use what the tallest pill leaves.</summary>
+    void UpdateFloatRange()
+    {
+        double tallest = S.Shape.Apps.Height;
+        if (S.Shape.Mode == ShapeMode.Split && S.Shape.ShowTray) tallest = Math.Max(tallest, S.Shape.Tray.Height);
+        double room = Math.Max(0, 48 - tallest);
+        if (Math.Abs(FloatSlider.Maximum - room) > 0.001) FloatSlider.Maximum = room;
+        FloatSlider.IsEnabled = room > 0;
+        FloatRow.Tag = $"Gap under the pills, lifting them off the screen edge (needs the styling module). Pill height wins: with the current height you can float up to {room:0}.";
+    }
+
+    /// <summary>Redraw the preview once per render pass however many edits came in.</summary>
+    void QueuePreviews()
+    {
+        UpdateFloatRange();
+        if (_previewQueued) return;
+        _previewQueued = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, () => { _previewQueued = false; RefreshPreviews(); });
+    }
+
     void RefreshPreviews()
     {
-        HomePreview.Show(S, false);
-        ShapePreview.Show(S, false);
-        StylePreview.Show(S, PreviewMaximized.IsChecked == true);
+        UpdateFloatRange();
+        // Only the page being looked at needs redrawing; the others redraw when they are shown.
+        foreach (var (preview, maximised) in new (TaskbarPreview, bool)[] { (HomePreview, false), (ShapePreview, false), (StylePreview, PreviewMaximized.IsChecked == true) })
+            if (preview.IsVisible) preview.Show(S, maximised);
     }
 
     void PreviewToggle(object sender, RoutedEventArgs e) => RefreshPreviews();
@@ -136,6 +169,7 @@ public partial class ControlPanel : Window
         if (Nav.SelectedItem is not ListBoxItem { Tag: FrameworkElement page }) return;
         foreach (FrameworkElement p in Pages.Children) p.Visibility = p == page ? Visibility.Visible : Visibility.Collapsed;
         Scroller.ScrollToTop();
+        RefreshPreviews();
         if (page == PageDiagnostics) { RefreshDiagnostics(); _diagTimer.Start(); } else _diagTimer.Stop();
         if (page == PageRules) RefreshRunningApps();
     }

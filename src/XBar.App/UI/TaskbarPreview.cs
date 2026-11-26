@@ -119,7 +119,7 @@ public sealed class TaskbarPreview : Border
         var tbRect = new RECT(0, 0, (int)ScreenW, (int)BarH);
         var apps = new RECT((int)(ScreenW - appsW) / 2, 0, (int)(ScreenW + appsW) / 2, (int)BarH);
         var tray = new RECT((int)ScreenW - 240, 0, (int)ScreenW - 14, (int)BarH);
-        int lift = s.Shape.Mode == ShapeMode.Stock ? 0 : (int)Math.Clamp(s.Shape.FloatOffset, 0, BarH - 32);
+        int lift = PillLayout.EffectiveLift(s.Shape, (int)BarH, 1.0);
         var pills = PillLayout.Compute(new TaskbarGeometry(tbRect, apps, tray), s.Shape, 1.0, s.Shape.ShowTray,
             s.Shape.Mode == ShapeMode.Single && s.Shape.FillWhenMaximized && _maximized, lift);
 

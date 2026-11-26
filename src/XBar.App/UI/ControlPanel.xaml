@@ -127,9 +127,9 @@
                                     <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Shape.ShowTray}" />
                                 </HeaderedContentControl>
                                 <Separator Style="{StaticResource RowDivider}" />
-                                <HeaderedContentControl Style="{StaticResource Row}" Header="Float height" Tag="Gap under the pills, lifting them off the screen edge. The pills lose that much height, so keep it small for tall pills (needs the styling module).">
+                                <HeaderedContentControl x:Name="FloatRow" Style="{StaticResource Row}" Header="Float height" Tag="Gap under the pills, lifting them off the screen edge (needs the styling module).">
                                     <StackPanel Orientation="Horizontal">
-                                        <Slider x:Name="FloatSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="16" TickFrequency="1" Value="{Binding Shape.FloatOffset}" />
+                                        <Slider x:Name="FloatSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="24" TickFrequency="1" Value="{Binding Shape.FloatOffset}" />
                                         <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=FloatSlider, StringFormat={}{0:0}}" />
                                     </StackPanel>
                                 </HeaderedContentControl>

@@ -99,7 +99,7 @@ public sealed class XBarEngine : IDisposable
         UpdateMouseTimer();
         if (!Paused)
         {
-            _shape.Forget();
+            // The region is only re-applied when the pills changed, so colour/blur edits don't flicker it.
             Rebuild("settings");
         }
         StatusChanged?.Invoke();
@@ -422,12 +422,10 @@ public sealed class XBarEngine : IDisposable
         if (geo.Taskbar.IsEmpty) geo = new TaskbarGeometry(tb.Rect, default, default);
         geo = geo with { Taskbar = tb.Rect };
 
-        // Float: the bar's window can't grow, so floating leaves a gap under the pills and the pills
-        // (centred in the strip above it) lose that much height. The icons are moved up by half the
-        // gap so they stay centred. Only possible with the TAP (it moves the XAML content); the strip
-        // never shrinks below a usable 32 DIP.
-        int lift = Appearance.IsAvailable && !fill && shape.Mode != ShapeMode.Stock ? (int)Math.Round(shape.FloatOffset * tb.Scale) : 0;
-        lift = Math.Clamp(lift, 0, Math.Max(0, tb.Rect.Height - (int)(32 * tb.Scale)));
+        // Float: the bar's window can't grow (Explorer refuses to resize it), so floating leaves a gap under
+        // the pills and the icons are moved up by half of it to stay centred. Pill height wins: the gap
+        // is capped to what is left under the tallest pill. Only possible with the TAP (it moves the XAML content).
+        int lift = Appearance.IsAvailable && !fill ? PillLayout.EffectiveLift(shape, tb.Rect.Height, tb.Scale) : 0;
         int contentShift = lift / 2;
 
         var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill, lift);

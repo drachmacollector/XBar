@@ -76,6 +76,7 @@
             <Style x:Key="ValueSlider" TargetType="Slider" BasedOn="{StaticResource {x:Type Slider}}">
                 <Setter Property="Width" Value="220" />
                 <Setter Property="IsSnapToTickEnabled" Value="True" />
+                <Setter Property="IsMoveToPointEnabled" Value="True" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
 

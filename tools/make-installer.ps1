@@ -1,7 +1,7 @@
 # Build the XBar installer (self-contained, no .NET install needed on the target PC).
 #   .\tools\make-installer.ps1                 full build (C++ module + app), stage, compile installer
 #   .\tools\make-installer.ps1 -SkipBuild      reuse the existing artifacts\tap\XBar.Tap.dll
-# Output: artifacts\installer\XBar-Setup-<version>.exe. Needs Inno Setup 6 (https://jrsoftware.org/isinfo.php).
+# Output: artifacts\installer\XBar-Setup-<version>.exe. Needs Inno Setup 6 or 7 (https://jrsoftware.org/isinfo.php).
 param([switch]$SkipBuild)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -9,9 +9,9 @@ $root = Split-Path $PSScriptRoot -Parent
 $version = ([xml](Get-Content "$root\Directory.Build.props")).Project.PropertyGroup.Version
 if (-not $version) { throw "Version not found in Directory.Build.props" }
 
-$iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") |
+$iscc = @("$env:ProgramFiles\Inno Setup 7\ISCC.exe","$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") |
     Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $iscc) { throw "Inno Setup 6 (ISCC.exe) not found. Install it from https://jrsoftware.org/isdl.php" }
+if (-not $iscc) { throw "Inno Setup 6 or 7 (ISCC.exe) not found. Install it from https://jrsoftware.org/isdl.php" }
 
 if (-not $SkipBuild) { & "$root\build.ps1" -Release }
 

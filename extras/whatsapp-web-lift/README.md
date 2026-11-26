@@ -7,5 +7,5 @@ This lifts just that box; the page, and XBar, are untouched.
 Install: open `brave://extensions`, turn on **Developer mode**, click **Load unpacked**, choose this folder.
 
 If the box is still partly covered (bigger pills / float), raise `TASKBAR_PX` in `content.js` and reload the extension.
-It does nothing when Windows reserves the taskbar strip (overlay off) or when the window isn't at the bottom of the screen.
+It does nothing when Windows reserves the taskbar strip (overlay off).
 Bottom taskbar only.

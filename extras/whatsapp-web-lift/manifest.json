@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "XBar: lift WhatsApp Web composer",
+  "version": "1.0.0",
+  "description": "Keeps the WhatsApp Web message box above a floating XBar taskbar. Runs only on web.whatsapp.com.",
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

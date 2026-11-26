@@ -2,7 +2,7 @@
 // XBar taskbar doesn't cover it. The page itself still fills the whole window.
 // Only active when Windows reserves no taskbar strip (XBar overlay mode); otherwise it does nothing.
 (() => {
-  const TASKBAR_PX = 64;   // how far to lift: pill height + float gap, in CSS px. Raise it if the box is still covered.
+  const TASKBAR_PX = 34;   // how far to lift: pill height + float gap, in CSS px. Raise it if the box is still covered.
   const STYLE_ID = "xbar-whatsapp-lift";
 
   function lift() {

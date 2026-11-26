@@ -88,9 +88,15 @@ public static class GeometryProvider
 
         Visit(root, 0);
 
-        // Content rects vertically follow the taskbar, not the buttons.
-        if (!apps.IsEmpty) { apps.Top = tb.Rect.Top; apps.Bottom = tb.Rect.Bottom; }
-        if (!tray.IsEmpty) { tray.Top = tb.Rect.Top; tray.Bottom = tb.Rect.Bottom; }
+        // Content rects follow the taskbar across its thickness, not the buttons.
+        RECT Span(RECT r)
+        {
+            if (tb.Vertical) { r.Left = tb.Rect.Left; r.Right = tb.Rect.Right; }
+            else { r.Top = tb.Rect.Top; r.Bottom = tb.Rect.Bottom; }
+            return r;
+        }
+        if (!apps.IsEmpty) apps = Span(apps);
+        if (!tray.IsEmpty) tray = Span(tray);
 
         // Fallback for the tray: the legacy TrayNotifyWnd still tracks the tray's left edge.
         if (tray.IsEmpty && tb.IsPrimary)

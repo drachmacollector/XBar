@@ -293,6 +293,7 @@ LRESULT Tap::HandleCommand(int cmd, std::wstring_view payload)
         look.gradientColor = ParseColor(kv[L"gradcolor"], look.gradientColor);
         look.gradientAngle = ToDouble(kv, L"gradangle", 90);
         look.floatPx = ToDouble(kv, L"float", 0);
+        look.edge = kv[L"edge"];
         look.animMs = ToDouble(kv, L"anim", 180);
         for (auto& part : [&] {
                  std::vector<std::wstring> v; std::wstring s = kv[L"pills"]; size_t p = 0;
@@ -562,17 +563,21 @@ void Tap::Apply(TaskbarState& tb, const Look& look)
         children.Append(pill);
     }
 
-    ApplyFloat(tb, look.floatPx / scale);
+    ApplyFloat(tb, look.floatPx / scale, look.edge);
 }
 
-void Tap::ApplyFloat(TaskbarState& tb, double dips)
+void Tap::ApplyFloat(TaskbarState& tb, double dips, const std::wstring& edge)
 {
     if (!tb.frame.XamlRoot()) return;
     auto root = tb.frame.XamlRoot().Content();
     if (!root) return;
     if (dips <= 0.01) { root.RenderTransform(nullptr); return; }
+    // Floating moves the content away from the screen edge the taskbar is docked to.
     wuxm::TranslateTransform t;
-    t.Y(-dips);
+    if (edge == L"left") t.X(dips);
+    else if (edge == L"right") t.X(-dips);
+    else if (edge == L"top") t.Y(dips);
+    else t.Y(-dips);
     root.RenderTransform(t);
 }
 

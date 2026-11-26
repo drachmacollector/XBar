@@ -425,10 +425,10 @@ public sealed class XBarEngine : IDisposable
         // Float: the bar's window can't grow (Explorer refuses to resize it), so floating leaves a gap under
         // the pills and the icons are moved up by half of it to stay centred. Pill height wins: the gap
         // is capped to what is left under the tallest pill. Only possible with the TAP (it moves the XAML content).
-        int lift = Appearance.IsAvailable && !fill ? PillLayout.EffectiveLift(shape, tb.Rect.Height, tb.Scale) : 0;
+        int lift = Appearance.IsAvailable && !fill ? PillLayout.EffectiveLift(shape, tb.Thickness, tb.Scale) : 0;
         int contentShift = lift / 2;
 
-        var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill, lift);
+        var pills = PillLayout.Compute(geo, shape, tb.Scale, includeTray, fill, lift, tb.Edge);
 
         // The window region is the hit-test + clip mask. When the TAP paints anti-aliased pills
         // (with shadow/glow), the mask must be a little larger than the pills.
@@ -445,6 +445,7 @@ public sealed class XBarEngine : IDisposable
             var r = p.Rect;
             r.Left -= pad; r.Right += pad;
             r.Top = Math.Max(0, r.Top - pad); r.Bottom = Math.Min(tb.Rect.Height, r.Bottom + pad);
+            r.Left = Math.Max(0, r.Left); r.Right = Math.Min(tb.Rect.Width, r.Right);
             return p with { Rect = r, Radius = p.Radius + pad };
         }).ToList();
 
@@ -456,9 +457,24 @@ public sealed class XBarEngine : IDisposable
 
         // The TAP's pill canvas lives inside the content it shifts, so pre-compensate the drawn pills.
         var drawPills = contentShift == 0 ? pills
-            : pills.Select(p => { var r = p.Rect; r.Top += contentShift; r.Bottom += contentShift; return p with { Rect = r }; }).ToList();
+            : pills.Select(p => { var r = p.Rect; Shift(ref r, contentShift, tb.Edge); return p with { Rect = r }; }).ToList();
         Appearance.Apply(new AppearanceSpec(tb.Hwnd, look, style, drawPills, tb.Scale,
-            contentShift, Settings.Behavior.AnimationsEnabled ? Settings.Behavior.AnimationMs : 0));
+            contentShift, Settings.Behavior.AnimationsEnabled ? Settings.Behavior.AnimationMs : 0, tb.Edge));
+    }
+
+    /// <summary>
+    /// The TAP moves the taskbar's content away from the screen edge by `shift`; the pill canvas lives inside that
+    /// content, so the drawn pills are pre-moved the opposite way (down for a bottom bar, left for a left bar, ...).
+    /// </summary>
+    static void Shift(ref RECT r, int shift, TaskbarEdge edge)
+    {
+        switch (edge)
+        {
+            case TaskbarEdge.Top: r.Top -= shift; r.Bottom -= shift; break;
+            case TaskbarEdge.Left: r.Left -= shift; r.Right -= shift; break;
+            case TaskbarEdge.Right: r.Left += shift; r.Right += shift; break;
+            default: r.Top += shift; r.Bottom += shift; break;
+        }
     }
 
     StyleSettings EffectiveStyle()
@@ -575,7 +591,8 @@ public sealed class XBarEngine : IDisposable
         if (!_geometry.TryGetValue(tb.Hwnd, out var g) || g.Tray.IsEmpty) return false;
         Win32.GetCursorPos(out var p);
         var zone = g.Tray;
-        zone.Top = tb.Rect.Top; zone.Bottom = tb.Rect.Bottom; zone.Right = tb.Rect.Right;
+        if (tb.Vertical) { zone.Left = tb.Rect.Left; zone.Right = tb.Rect.Right; zone.Bottom = tb.Rect.Bottom; }
+        else { zone.Top = tb.Rect.Top; zone.Bottom = tb.Rect.Bottom; zone.Right = tb.Rect.Right; }
         return zone.Contains(p);
     }
 

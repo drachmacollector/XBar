@@ -6,9 +6,29 @@ namespace XBar.Core.Engine;
 
 public sealed record MonitorInfo(IntPtr Handle, string Device, RECT Bounds, RECT Work, bool IsPrimary);
 
+/// <summary>Which screen edge the taskbar is docked to.</summary>
+public enum TaskbarEdge { Bottom, Top, Left, Right }
+
 public sealed record TaskbarInfo(IntPtr Hwnd, bool IsPrimary, RECT Rect, MonitorInfo Monitor, uint Dpi)
 {
     public double Scale => Dpi / 96.0;
+
+    public bool Vertical => Rect.Width < Rect.Height;
+
+    /// <summary>Edge of its monitor the bar is docked to (nearest edge along the bar's short axis).</summary>
+    public TaskbarEdge Edge
+    {
+        get
+        {
+            var b = Monitor.Bounds;
+            return Vertical
+                ? (Rect.Left - b.Left <= b.Right - Rect.Right ? TaskbarEdge.Left : TaskbarEdge.Right)
+                : (b.Bottom - Rect.Bottom <= Rect.Top - b.Top ? TaskbarEdge.Bottom : TaskbarEdge.Top);
+        }
+    }
+
+    /// <summary>Bar thickness in px: height for a top/bottom bar, width for a side bar.</summary>
+    public int Thickness => Vertical ? Rect.Width : Rect.Height;
 }
 
 public static class Displays

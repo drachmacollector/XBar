@@ -22,7 +22,48 @@ public static class PillLayout
 {
     /// <param name="liftPx">Gap kept under the pills (float). Pills are centred in the strip above it,
     /// so the content only has to move up by half of this to stay centred inside them.</param>
-    public static List<Pill> Compute(TaskbarGeometry g, ShapeSettings s, double scale, bool includeTray, bool fillEdgeToEdge, int liftPx = 0)
+    public static List<Pill> Compute(TaskbarGeometry g, ShapeSettings s, double scale, bool includeTray, bool fillEdgeToEdge, int liftPx = 0, TaskbarEdge edge = TaskbarEdge.Bottom)
+    {
+        if (edge == TaskbarEdge.Bottom) return ComputeBottom(g, s, scale, includeTray, fillEdgeToEdge, liftPx);
+
+        // Every other edge is the bottom-edge layout seen through a transform: along-the-bar becomes X
+        // (apps first, tray at the far end) and the screen edge becomes the bottom. Compute there, map back.
+        var tb = g.Taskbar;
+        int w = tb.Width, h = tb.Height;
+        bool vertical = edge is TaskbarEdge.Left or TaskbarEdge.Right;
+        var norm = new TaskbarGeometry(
+            new RECT(0, 0, vertical ? h : w, vertical ? w : h),
+            g.Apps.IsEmpty ? default : ToNorm(g.Apps, tb, edge),
+            g.Tray.IsEmpty ? default : ToNorm(g.Tray, tb, edge));
+        var result = ComputeBottom(norm, s, scale, includeTray, fillEdgeToEdge, liftPx);
+        for (int i = 0; i < result.Count; i++)
+            result[i] = result[i] with { Rect = FromNorm(result[i].Rect, w, h, edge) };
+        return result;
+    }
+
+    // Normalised space: X = position along the bar, Y = distance from the bar's inner side; the screen edge is Y = max.
+    static RECT ToNorm(RECT r, RECT tb, TaskbarEdge e)
+    {
+        int W = tb.Width, H = tb.Height;
+        int l = r.Left - tb.Left, t = r.Top - tb.Top, rr = r.Right - tb.Left, b = r.Bottom - tb.Top;
+        return e switch
+        {
+            TaskbarEdge.Top => new RECT(l, H - b, rr, H - t),
+            TaskbarEdge.Left => new RECT(t, W - rr, b, W - l),
+            TaskbarEdge.Right => new RECT(t, l, b, rr),
+            _ => new RECT(l, t, rr, b),
+        };
+    }
+
+    static RECT FromNorm(RECT n, int W, int H, TaskbarEdge e) => e switch
+    {
+        TaskbarEdge.Top => new RECT(n.Left, H - n.Bottom, n.Right, H - n.Top),
+        TaskbarEdge.Left => new RECT(W - n.Bottom, n.Left, W - n.Top, n.Right),
+        TaskbarEdge.Right => new RECT(n.Top, n.Left, n.Bottom, n.Right),
+        _ => n,
+    };
+
+    static List<Pill> ComputeBottom(TaskbarGeometry g, ShapeSettings s, double scale, bool includeTray, bool fillEdgeToEdge, int liftPx)
     {
         var pills = new List<Pill>();
         var tb = g.Taskbar;
@@ -118,12 +159,12 @@ public static class PillLayout
     /// The float gap actually used. Pill height wins: the gap is whatever the taskbar window has left
     /// under the tallest pill, so raising the height can reduce the float but never shrinks the pill.
     /// </summary>
-    public static int EffectiveLift(ShapeSettings s, int taskbarHeightPx, double scale)
+    public static int EffectiveLift(ShapeSettings s, int taskbarThicknessPx, double scale)
     {
         if (s.Mode == ShapeMode.Stock) return 0;
         double tallest = s.Apps.Height;
         if (s.Mode == ShapeMode.Split && s.ShowTray) tallest = Math.Max(tallest, s.Tray.Height);
-        int room = Math.Max(0, taskbarHeightPx - Px(tallest, scale));
+        int room = Math.Max(0, taskbarThicknessPx - Px(tallest, scale));
         return Math.Clamp(Px(s.FloatOffset, scale), 0, room);
     }
 

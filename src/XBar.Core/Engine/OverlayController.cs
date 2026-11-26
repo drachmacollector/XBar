@@ -151,9 +151,8 @@ public sealed class OverlayController
     {
         if (ReservedMonitors.Contains(mon.Device))
             return RestoreService.StockWorkArea(mon, taskbars, autoHide);
-        var r = mon.Bounds;
-        r.Bottom -= Math.Clamp(InsetPx, 0, 100);
-        return r;
+        var edge = taskbars.FirstOrDefault(t => t.Monitor.Device == mon.Device)?.Edge ?? TaskbarEdge.Bottom;
+        return RestoreService.ReserveEdge(mon.Bounds, edge, Math.Clamp(InsetPx, 0, 100));
     }
 
     void Trim()

@@ -13,7 +13,8 @@ public sealed record AppearanceSpec(
     IReadOnlyList<Pill> Pills,
     double Scale,
     double FloatOffsetPx,
-    int AnimationMs)
+    int AnimationMs,
+    TaskbarEdge Edge = TaskbarEdge.Bottom)
 {
     public string Serialize()
     {
@@ -36,6 +37,7 @@ public sealed record AppearanceSpec(
         Kv("gradcolor", Decor.GradientColor);
         Kv("gradangle", Decor.GradientAngle);
         Kv("float", FloatOffsetPx);
+        Kv("edge", Edge.ToString().ToLowerInvariant());
         Kv("anim", AnimationMs);
         Kv("scale", Scale);
         sb.Append("pills=");

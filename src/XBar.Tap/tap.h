@@ -27,6 +27,7 @@ namespace xbar
         winrt::Windows::UI::Color gradientColor{ 0x40, 0x30, 0x30, 0x60 };
         double gradientAngle = 90;
         double floatPx = 0;
+        std::wstring edge = L"bottom";
         double animMs = 180;
         std::vector<PillSpec> pills;
     };
@@ -78,7 +79,7 @@ namespace xbar
         void Apply(TaskbarState& tb, const Look& look);
         void Restore(TaskbarState& tb) noexcept;
         void SetOpacity(TaskbarState& tb, double value, double ms);
-        void ApplyFloat(TaskbarState& tb, double px);
+        void ApplyFloat(TaskbarState& tb, double px, const std::wstring& edge);
         wuxm::Brush MakeMaterial(TaskbarState& tb, const Look& look);
         void DecorateLiquid(wuxc::Border& pill, double radius, double scale, const Look& look);
         void DumpTree();

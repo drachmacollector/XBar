@@ -62,6 +62,66 @@ public class PillLayoutTests
         Assert.Equal(20, PillLayout.EffectiveLift(s, 60, 1.25));
     }
 
+    [Theory]
+    [InlineData(TaskbarEdge.Left)]
+    [InlineData(TaskbarEdge.Right)]
+    public void Side_taskbar_gets_vertical_pills_with_the_tray_flush_to_the_screen_end(TaskbarEdge edge)
+    {
+        // 1920x1080 @125%, 60 px wide bar docked left or right.
+        int x0 = edge == TaskbarEdge.Left ? 0 : 1860;
+        var tb = new RECT(x0, 0, x0 + 60, 1080);
+        var apps = new RECT(x0, 250, x0 + 60, 690);
+        var tray = new RECT(x0, 760, x0 + 60, 1070);
+        var pills = PillLayout.Compute(new TaskbarGeometry(tb, apps, tray), new ShapeSettings(), 1.25, true, false, 0, edge);
+        Assert.Equal(2, pills.Count);
+        var a = pills[0]; var t = pills[1];
+        Assert.Equal("apps", a.Kind);
+        Assert.Equal(55, a.Rect.Width);                 // 44 DIP * 1.25 thick
+        Assert.Equal(250 - 8, a.Rect.Top);              // padding runs along the bar
+        Assert.Equal(690 + 8, a.Rect.Bottom);
+        Assert.Equal("tray", t.Kind);
+        Assert.Equal(1080, t.Rect.Bottom);              // tray pill attached to the screen end (Show Desktop side)
+        Assert.True(t.Rect.Top > a.Rect.Bottom);
+        // inside the 60 px wide window, centred across the bar
+        Assert.Equal(edge == TaskbarEdge.Left ? 3 : 2, a.Rect.Left);
+        Assert.Equal(edge == TaskbarEdge.Left ? 58 : 57, a.Rect.Right);
+    }
+
+    [Fact]
+    public void Side_taskbar_float_gap_is_on_the_screen_edge_side()
+    {
+        var s = new ShapeSettings();
+        s.Apps.Height = 40; // 50 px, leaves a 10 px gap in a 60 px bar
+        var left = PillLayout.Compute(new TaskbarGeometry(new RECT(0, 0, 60, 1080), new RECT(0, 250, 60, 690), default), s, 1.25, false, false, 10, TaskbarEdge.Left);
+        Assert.Equal(10, left[0].Rect.Left);            // gap against the screen edge (x = 0..10)
+        Assert.Equal(60, left[0].Rect.Right);
+        var right = PillLayout.Compute(new TaskbarGeometry(new RECT(1860, 0, 1920, 1080), new RECT(1860, 250, 1920, 690), default), s, 1.25, false, false, 10, TaskbarEdge.Right);
+        Assert.Equal(0, right[0].Rect.Left);
+        Assert.Equal(50, right[0].Rect.Right);          // gap against the screen edge (x = 50..60)
+    }
+
+    [Fact]
+    public void Top_taskbar_mirrors_the_bottom_layout()
+    {
+        var s = new ShapeSettings();
+        s.Apps.Height = 40;
+        var tb = new RECT(0, 0, 1920, 60);
+        var pills = PillLayout.Compute(new TaskbarGeometry(tb, new RECT(738, 0, 1208, 60), default), s, 1.25, false, false, 10, TaskbarEdge.Top);
+        Assert.Equal(10, pills[0].Rect.Top);            // float gap against the top screen edge
+        Assert.Equal(60, pills[0].Rect.Bottom);
+    }
+
+    [Fact]
+    public void Stock_work_area_reserves_the_taskbars_own_edge()
+    {
+        var mon = new MonitorInfo(IntPtr.Zero, "D1", new RECT(0, 0, 1920, 1080), new RECT(0, 0, 1920, 1080), true);
+        TaskbarInfo Tb(RECT r) => new(IntPtr.Zero, true, r, mon, 120);
+        Assert.Equal(new RECT(60, 0, 1920, 1080), RestoreService.StockWorkArea(mon, new() { Tb(new RECT(0, 0, 60, 1080)) }, false));
+        Assert.Equal(new RECT(0, 0, 1860, 1080), RestoreService.StockWorkArea(mon, new() { Tb(new RECT(1860, 0, 1920, 1080)) }, false));
+        Assert.Equal(new RECT(0, 60, 1920, 1080), RestoreService.StockWorkArea(mon, new() { Tb(new RECT(0, 0, 1920, 60)) }, false));
+        Assert.Equal(new RECT(0, 0, 1920, 1020), RestoreService.StockWorkArea(mon, new() { Tb(new RECT(0, 1020, 1920, 1080)) }, false));
+    }
+
     [Fact]
     public void Tray_hidden_when_not_included()
     {

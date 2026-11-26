@@ -67,15 +67,27 @@ public static class RestoreService
         }
     }
 
-    /// <summary>What Explorer itself would set: monitor minus a bottom taskbar (unless auto-hide).</summary>
+    /// <summary>What Explorer itself would set: monitor minus the taskbar's strip on its edge (unless auto-hide).</summary>
     public static RECT StockWorkArea(MonitorInfo mon, List<TaskbarInfo> taskbars, bool autoHide)
     {
         var tb = taskbars.FirstOrDefault(t => t.Monitor.Device == mon.Device);
         if (tb is null || autoHide) return mon.Bounds;
-        int h = tb.Rect.Height;
-        if (h <= 0 || h > mon.Bounds.Height / 3) return mon.Bounds;
-        var r = mon.Bounds;
-        r.Bottom -= h;
+        int t = tb.Thickness;
+        int along = tb.Vertical ? mon.Bounds.Width : mon.Bounds.Height;
+        if (t <= 0 || t > along / 3) return mon.Bounds;
+        return ReserveEdge(mon.Bounds, tb.Edge, t);
+    }
+
+    /// <summary>The rect with <paramref name="px"/> removed from the given edge.</summary>
+    public static RECT ReserveEdge(RECT r, TaskbarEdge edge, int px)
+    {
+        switch (edge)
+        {
+            case TaskbarEdge.Top: r.Top += px; break;
+            case TaskbarEdge.Left: r.Left += px; break;
+            case TaskbarEdge.Right: r.Right -= px; break;
+            default: r.Bottom -= px; break;
+        }
         return r;
     }
 

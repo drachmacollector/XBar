@@ -165,7 +165,7 @@ public static class PillLayout
         double tallest = s.Apps.Height;
         if (s.Mode == ShapeMode.Split && s.ShowTray) tallest = Math.Max(tallest, s.Tray.Height);
         int room = Math.Max(0, taskbarThicknessPx - Px(tallest, scale));
-        return Math.Clamp(Px(s.FloatOffset, scale), 0, room);
+        return s.FloatOffset < 0 ? room : Math.Clamp(Px(s.FloatOffset, scale), 0, room);
     }
 
     /// <summary>Vertical extent of a pill: its height, capped to the strip above the float gap, centred in it.</summary>

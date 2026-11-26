@@ -60,6 +60,7 @@ public partial class ControlPanel : Window
             else _editThrottle.Stop();   // nothing new since the last tick: the drag is over
         };
 
+        Scroller.PreviewMouseWheel += Scroller_PreviewMouseWheel;
         _diagTimer.Tick += (_, _) => RefreshDiagnostics();
         _host.StatusChanged += RefreshStatus;
         if (_host.Tap is not null) _host.Tap.Changed += RefreshStatus;
@@ -126,27 +127,18 @@ public partial class ControlPanel : Window
 
     void Commit()
     {
+        // One height / roundness for both pills (the page only edits the apps pill).
+        S.Shape.Tray.Height = S.Shape.Apps.Height;
+        S.Shape.Tray.CornerRadius = S.Shape.Apps.CornerRadius;
         _host.SettingsEdited();
         HotkeyWarning.Text = _host.Engine?.FailedHotkeys.Count > 0
             ? $"Could not register: {string.Join(", ", _host.Engine.FailedHotkeys)} (in use by another app)."
             : "";
     }
 
-    /// <summary>The taskbar window is 48 DIP tall and can't grow, so the float gap can only use what the tallest pill leaves.</summary>
-    void UpdateFloatRange()
-    {
-        double tallest = S.Shape.Apps.Height;
-        if (S.Shape.Mode == ShapeMode.Split && S.Shape.ShowTray) tallest = Math.Max(tallest, S.Shape.Tray.Height);
-        double room = Math.Max(0, 48 - tallest);
-        if (Math.Abs(FloatSlider.Maximum - room) > 0.001) FloatSlider.Maximum = room;
-        FloatSlider.IsEnabled = room > 0;
-        FloatRow.Tag = $"Gap under the pills, lifting them off the screen edge (needs the styling module). Pill height wins: with the current height you can float up to {room:0}.";
-    }
-
     /// <summary>Redraw the preview once per render pass however many edits came in.</summary>
     void QueuePreviews()
     {
-        UpdateFloatRange();
         if (_previewQueued) return;
         _previewQueued = true;
         Dispatcher.BeginInvoke(DispatcherPriority.Render, () => { _previewQueued = false; RefreshPreviews(); });
@@ -154,7 +146,6 @@ public partial class ControlPanel : Window
 
     void RefreshPreviews()
     {
-        UpdateFloatRange();
         // Only the page being looked at needs redrawing; the others redraw when they are shown.
         foreach (var (preview, maximised) in new (TaskbarPreview, bool)[] { (HomePreview, false), (ShapePreview, false), (StylePreview, PreviewMaximized.IsChecked == true) })
             if (preview.IsVisible) preview.Show(S, maximised);
@@ -170,8 +161,25 @@ public partial class ControlPanel : Window
         foreach (FrameworkElement p in Pages.Children) p.Visibility = p == page ? Visibility.Visible : Visibility.Collapsed;
         Scroller.ScrollToTop();
         RefreshPreviews();
-        if (page == PageDiagnostics) { RefreshDiagnostics(); _diagTimer.Start(); } else _diagTimer.Stop();
+        Diag_Toggled(null, null);
         if (page == PageRules) RefreshRunningApps();
+    }
+
+    void Diag_Toggled(object? sender, RoutedEventArgs? e)
+    {
+        if (PageAdvanced.Visibility == Visibility.Visible && DiagExpander.IsExpanded) { RefreshDiagnostics(); _diagTimer.Start(); }
+        else _diagTimer.Stop();
+    }
+
+    /// <summary>Smooth, predictable wheel / two-finger scrolling: a fixed pixel step per wheel notch instead of
+    /// WPF's multi-line jump (precision touchpads send many small deltas and overshoot otherwise).</summary>
+    void Scroller_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        for (var d = e.OriginalSource as DependencyObject; d is not null && d != Scroller;
+             d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+            if (d is ComboBox { IsDropDownOpen: true } || d is TextBox { VerticalScrollBarVisibility: not ScrollBarVisibility.Disabled }) return;   // they scroll themselves
+        Scroller.ScrollToVerticalOffset(Math.Clamp(Scroller.VerticalOffset - e.Delta * 0.35, 0, Scroller.ScrollableHeight));
+        e.Handled = true;
     }
 
     void RefreshStatus()
@@ -217,12 +225,6 @@ public partial class ControlPanel : Window
         if (_host.Tap is null) return;
         if (await _host.Tap.ConnectAsync()) _host.Engine?.Rebuild("tap connected");
         RefreshStatus();
-    }
-
-    void LightDark_Checked(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        S.Style.LightVariant ??= SettingsStore.Clone(new Settings { Style = S.Style }).Style;
     }
 
     void RunAtLogin_Changed(object sender, RoutedEventArgs e)

@@ -63,8 +63,8 @@ public sealed class ShapeSettings
     /// <summary>Single-bar mode side margins (DIPs).</summary>
     public double SingleMarginX { get; set; } = 8;
     public bool ShowTray { get; set; } = true;
-    /// <summary>Lift the pills this many DIPs above the screen edge (content is re-centred by the TAP).</summary>
-    public double FloatOffset { get; set; } = 0;
+    /// <summary>Lift the pills this many DIPs above the screen edge. Negative (default) = automatic: whatever room the pill height leaves.</summary>
+    public double FloatOffset { get; set; } = -1;
     /// <summary>Single-bar mode: become a full edge-to-edge bar while a window is maximised.</summary>
     public bool FillWhenMaximized { get; set; } = false;
 }
@@ -74,8 +74,8 @@ public sealed class Appearance
     public bool Enabled { get; set; } = true;
     public AccentMode Accent { get; set; } = AccentMode.Liquid;
     /// <summary>#AARRGGBB. For Liquid this is the smoky body tint (the reference design uses ~12 % white; a little dark keeps white icons/clock readable on bright wallpapers).</summary>
-    public string Color { get; set; } = "#3014181E";
-    public double BlurRadius { get; set; } = 18;
+    public string Color { get; set; } = "#1C14181E";
+    public double BlurRadius { get; set; } = 6;
     public bool ShowLine { get; set; } = false;
 
     public Appearance Clone() => (Appearance)MemberwiseClone();
@@ -83,9 +83,9 @@ public sealed class Appearance
 
 public sealed class StyleSettings
 {
-    public Appearance Desktop { get; set; } = new() { Accent = AccentMode.Liquid, Color = "#3014181E", BlurRadius = 18 };
+    public Appearance Desktop { get; set; } = new() { Accent = AccentMode.Liquid, Color = "#1C14181E", BlurRadius = 6 };
     public Appearance VisibleWindow { get; set; } = new() { Enabled = false };
-    public Appearance MaximizedWindow { get; set; } = new() { Enabled = true, Accent = AccentMode.Liquid, Color = "#66181C22", BlurRadius = 18 };
+    public Appearance MaximizedWindow { get; set; } = new() { Enabled = true, Accent = AccentMode.Liquid, Color = "#55181C22", BlurRadius = 6 };
     public Appearance StartOpen { get; set; } = new() { Enabled = false };
     public Appearance SearchOpen { get; set; } = new() { Enabled = false };
     public Appearance TaskViewOpen { get; set; } = new() { Enabled = false };

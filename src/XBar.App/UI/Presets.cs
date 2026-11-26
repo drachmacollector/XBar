@@ -27,7 +27,7 @@ public static class Presets
 
     public static IReadOnlyList<Preset> All { get; } = new[]
     {
-        new Preset("Liquid Glass", A(AccentMode.Liquid, "#3014181E", 18), A(AccentMode.Liquid, "#66181C22", 18), "#B0FFFFFF", 22, true),
+        new Preset("Liquid Glass", A(AccentMode.Liquid, "#1C14181E", 6), A(AccentMode.Liquid, "#55181C22", 6), "#B0FFFFFF", 22, true),
         new Preset("Glass", A(AccentMode.Acrylic, "#30101010"), A(AccentMode.Acrylic, "#90101010"), "#33FFFFFF", 12, true),
         new Preset("Clear", A(AccentMode.Clear, "#00000000"), A(AccentMode.Clear, "#60101010"), "#22FFFFFF", 12, false),
         new Preset("Frost", A(AccentMode.Blur, "#20FFFFFF", 30), A(AccentMode.Blur, "#60202020", 30), "#40FFFFFF", 14, true),

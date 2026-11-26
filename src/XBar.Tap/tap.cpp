@@ -62,7 +62,9 @@ namespace
         }
         catch (...)
         {
-            Log(L"Exception in TAP window procedure (swallowed)");
+            try { throw; }
+            catch (const winrt::hresult_error& e) { Logf(L"Exception in TAP window procedure (swallowed): 0x%08X %s", static_cast<unsigned>(e.code().value), e.message().c_str()); }
+            catch (...) { Log(L"Exception in TAP window procedure (swallowed)"); }
             return 0;
         }
         return DefWindowProcW(hwnd, msg, wp, lp);
@@ -370,7 +372,7 @@ wuxm::Brush Tap::MakeMaterial(TaskbarState& tb, const Look& look)
         // effects cannot displace pixels, so the bending is imitated by the rim/bevel in Apply.)
         auto compositor = wuxh::ElementCompositionPreview::GetElementVisual(tb.frame).Compositor();
         const wfn::float4 tint{ c.R / 255.f, c.G / 255.f, c.B / 255.f, c.A / 255.f };
-        return winrt::make<XamlBlurBrush>(compositor, static_cast<float>(std::max(0.0, look.blur / 3.0)), tint, 1.7f);
+        return winrt::make<XamlBlurBrush>(compositor, static_cast<float>(std::max(0.0, look.blur / 3.0)), tint, 1.6f);
     }
     if (look.accent == L"blur")
     {
@@ -411,44 +413,101 @@ namespace
     }
 }
 
-// Liquid glass chrome: a bright specular rim plus a few fading inner rings (the bevel band where the web
-// version bends light) and a soft sheen over the upper half.
-void Tap::DecorateLiquid(wuxc::Border& pill, double radius, double scale, const Look& look)
+// Liquid glass chrome. Real liquid glass bends the backdrop at its rim; XAML composition effects cannot
+// displace pixels, so the rim is faked in layers (bottom to top):
+//   1. edge lens   - a band along the edge that samples the backdrop with more blur/saturation/brightness
+//                    than the clear centre, which reads as the thick, light-bending edge of the glass
+//   2. specular    - crisp 1-2 px highlight, brightest top-left and bottom-right (light direction)
+//   3. fringe      - faint cool/warm colour split on the opposite diagonal (chromatic aberration)
+//   4. inner glow  - a few fading rings, a soft bottom inner shadow for thickness, and a top sheen
+void Tap::DecorateLiquid(wuxc::Border& pill, double w, double h, double radius, double scale, const Look& look, TaskbarState& tb)
 {
     const auto rim = look.border ? look.borderColor : wuc_::Color{ 0, 255, 255, 255 };
     const double th = std::max(1.0, look.borderW / scale);
     pill.BorderThickness(wux::ThicknessHelper::FromUniformLength(th));
-    pill.BorderBrush(RimBrush(rim, 1.0, 0.25, 0.75));
+    pill.BorderBrush(RimBrush(rim, 1.0, 0.2, 0.7));
 
-    // Nested rings, each inside the previous one: alpha fades towards the centre.
-    constexpr double ringAlpha[] = { 0.55, 0.32, 0.18, 0.08 };
-    wuxc::Border outer{ nullptr }, inner{ nullptr };
-    double rr = std::max(0.0, radius - th);
-    for (double a : ringAlpha)
+    wuxc::Grid layers;
+    const double r1 = std::max(0.0, radius - th);
+    auto ring = [&](double inset, wuxm::Brush brush, double thickness = 1.0)
     {
-        wuxc::Border ring;
-        ring.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(rr));
-        ring.BorderThickness(wux::ThicknessHelper::FromUniformLength(1.0));
-        ring.BorderBrush(RimBrush({ 0x60, 0xFF, 0xFF, 0xFF }, a * 2.0, a * 0.5, a * 1.4));
-        if (!outer) outer = ring; else inner.Child(ring);
-        inner = ring;
-        rr = std::max(0.0, rr - 1.0);
+        wuxc::Border b;
+        b.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(std::max(0.0, r1 - inset)));
+        b.BorderThickness(wux::ThicknessHelper::FromUniformLength(thickness));
+        b.BorderBrush(brush);
+        b.Margin(wux::ThicknessHelper::FromUniformLength(inset));
+        layers.Children().Append(b);
+    };
+    auto fill = [&](wuxm::Brush brush)
+    {
+        wuxc::Border b;
+        b.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(r1));
+        b.Background(brush);
+        layers.Children().Append(b);
+    };
+    auto vertical = [&](std::initializer_list<std::pair<double, wuc_::Color>> stops)
+    {
+        wuxm::LinearGradientBrush g;
+        g.StartPoint({ 0.5f, 0.0f });
+        g.EndPoint({ 0.5f, 1.0f });
+        for (auto& [off, col] : stops) { wuxm::GradientStop st; st.Offset(off); st.Color(col); g.GradientStops().Append(st); }
+        return g;
+    };
+
+    // 1. edge lens: a ring-shaped Path (even-odd fill) whose fill is a stronger backdrop blur.
+    try
+    {
+        const double W = w - 2 * th, H = h - 2 * th;
+        const double band = std::min({ 7.0, r1, W / 4, H / 4 });
+        auto figure = [&](double x, double y, double fw, double fh, double fr)
+        {
+            fr = std::clamp(fr, 0.0, std::min(fw, fh) / 2);
+            wuxm::PathFigure f;
+            f.IsClosed(true);
+            f.StartPoint({ static_cast<float>(x + fr), static_cast<float>(y) });
+            auto line = [&](double px, double py) { wuxm::LineSegment l; l.Point({ static_cast<float>(px), static_cast<float>(py) }); f.Segments().Append(l); };
+            auto arc = [&](double px, double py) { wuxm::ArcSegment a; a.Point({ static_cast<float>(px), static_cast<float>(py) }); a.Size({ static_cast<float>(fr), static_cast<float>(fr) }); a.SweepDirection(wuxm::SweepDirection::Clockwise); f.Segments().Append(a); };
+            line(x + fw - fr, y);      arc(x + fw, y + fr);
+            line(x + fw, y + fh - fr); arc(x + fw - fr, y + fh);
+            line(x + fr, y + fh);      arc(x, y + fh - fr);
+            line(x, y + fr);           arc(x + fr, y);
+            return f;
+        };
+        wuxm::PathGeometry geo;
+        geo.FillRule(wuxm::FillRule::EvenOdd);
+        geo.Figures().Append(figure(0, 0, W, H, r1));
+        geo.Figures().Append(figure(band, band, W - 2 * band, H - 2 * band, std::max(0.0, r1 - band)));
+
+        auto compositor = wuxh::ElementCompositionPreview::GetElementVisual(tb.frame).Compositor();
+        const wfn::float4 white{ 1.f, 1.f, 1.f, 0.16f };
+        wux::Shapes::Path lens;
+        lens.Data(geo);
+        lens.HorizontalAlignment(wux::HorizontalAlignment::Left);
+        lens.VerticalAlignment(wux::VerticalAlignment::Top);
+        lens.Fill(winrt::make<XamlBlurBrush>(compositor, 4.0f, white, 1.8f));
+        layers.Children().Append(lens);
+    }
+    catch (...) { Log(L"Liquid: edge lens unavailable"); }
+    // 2. specular rim, 3. chromatic fringe
+    ring(0, RimBrush({ 0xFF, 0xFF, 0xFF, 0xFF }, 0.85, 0.0, 0.40));
+    {
+        wuxm::LinearGradientBrush f;
+        f.StartPoint({ 1.0f, 0.0f });
+        f.EndPoint({ 0.0f, 1.0f });
+        wuxm::GradientStop g0; g0.Offset(0.0); g0.Color({ 0x70, 0x9A, 0xD8, 0xFF });
+        wuxm::GradientStop g1; g1.Offset(0.5); g1.Color({ 0x00, 0xFF, 0xFF, 0xFF });
+        wuxm::GradientStop g2; g2.Offset(1.0); g2.Color({ 0x70, 0xFF, 0xB4, 0xA0 });
+        f.GradientStops().Append(g0); f.GradientStops().Append(g1); f.GradientStops().Append(g2);
+        ring(1, f);
     }
 
-    // Sheen: white fading out over the top half.
-    wuxm::LinearGradientBrush sheen;
-    sheen.StartPoint({ 0.5f, 0.0f });
-    sheen.EndPoint({ 0.5f, 1.0f });
-    wuxm::GradientStop s0; s0.Offset(0.0); s0.Color({ 0x30, 0xFF, 0xFF, 0xFF });
-    wuxm::GradientStop s1; s1.Offset(0.55); s1.Color({ 0x00, 0xFF, 0xFF, 0xFF });
-    sheen.GradientStops().Append(s0);
-    sheen.GradientStops().Append(s1);
-    wuxc::Border sheenLayer;
-    sheenLayer.CornerRadius(wux::CornerRadiusHelper::FromUniformRadius(rr));
-    sheenLayer.Background(sheen);
-    inner.Child(sheenLayer);
+    // 4. inner glow rings, bottom inner shadow, top sheen
+    ring(2, RimBrush({ 0x50, 0xFF, 0xFF, 0xFF }, 0.8, 0.15, 0.5));
+    ring(3, RimBrush({ 0x30, 0xFF, 0xFF, 0xFF }, 0.8, 0.10, 0.4));
+    fill(vertical({ { 0.0, { 0x00, 0, 0, 0 } }, { 0.62, { 0x00, 0, 0, 0 } }, { 1.0, { 0x38, 0, 0, 0 } } }));
+    fill(vertical({ { 0.0, { 0x40, 0xFF, 0xFF, 0xFF } }, { 0.5, { 0x00, 0xFF, 0xFF, 0xFF } } }));
 
-    pill.Child(outer);
+    pill.Child(layers);
 }
 
 void Tap::Apply(TaskbarState& tb, const Look& look)
@@ -536,7 +595,7 @@ void Tap::Apply(TaskbarState& tb, const Look& look)
         const bool liquid = look.accent == L"liquid";
         if (liquid)
         {
-            DecorateLiquid(pill, r, scale, look);
+            DecorateLiquid(pill, w, h, r, scale, look, tb);
         }
         else if (look.border)
         {

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:XBar.App.UI"
              x:Name="Root">
-    <!-- DataContext: XBar.Core.Config.Appearance -->
+    <!-- DataContext: XBar.Core.Config.Appearance. Basic look: on/off, material, tint. -->
     <Border Style="{StaticResource Card}">
         <StackPanel>
             <HeaderedContentControl Style="{StaticResource Row}"
@@ -15,24 +15,12 @@
 
             <StackPanel IsEnabled="{Binding Enabled}">
                 <Separator Style="{StaticResource RowDivider}" />
-                <HeaderedContentControl Style="{StaticResource Row}" Header="Material"
-                                        Tag="Normal = Windows default. Opaque = solid tint. Clear = tinted glass with no blur. Blur / Acrylic = frosted.">
+                <HeaderedContentControl Style="{StaticResource Row}" Header="Material">
                     <ComboBox Width="160" ItemsSource="{x:Static ui:EnumLists.AccentModes}" SelectedItem="{Binding Accent}" />
                 </HeaderedContentControl>
                 <Separator Style="{StaticResource RowDivider}" />
-                <HeaderedContentControl Style="{StaticResource Row}" Header="Tint colour" Tag="Colour and opacity laid over the material.">
+                <HeaderedContentControl Style="{StaticResource Row}" Header="Tint">
                     <ui:ColorField Color="{Binding Color}" />
-                </HeaderedContentControl>
-                <Separator Style="{StaticResource RowDivider}" />
-                <HeaderedContentControl Style="{StaticResource Row}" Header="Blur strength" Tag="Used by the Blur material.">
-                    <StackPanel Orientation="Horizontal">
-                        <Slider x:Name="BlurSlider" Style="{StaticResource ValueSlider}" Minimum="0" Maximum="100" TickFrequency="1" Value="{Binding BlurRadius}" />
-                        <TextBlock Style="{StaticResource ValueText}" Text="{Binding Value, ElementName=BlurSlider, StringFormat={}{0:0}}" />
-                    </StackPanel>
-                </HeaderedContentControl>
-                <Separator Style="{StaticResource RowDivider}" />
-                <HeaderedContentControl Style="{StaticResource Row}" Header="Top edge line" Tag="The thin highlight line Windows draws along the top of the taskbar.">
-                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding ShowLine}" />
                 </HeaderedContentControl>
             </StackPanel>
         </StackPanel>

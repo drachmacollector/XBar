@@ -62,6 +62,16 @@ public class PillLayoutTests
         Assert.Equal(20, PillLayout.EffectiveLift(s, 60, 1.25));
     }
 
+    [Fact]
+    public void Float_is_automatic_by_default_and_follows_pill_height()
+    {
+        var s = new ShapeSettings();   // FloatOffset < 0 = auto
+        s.Apps.Height = 44; s.Tray.Height = 44;
+        Assert.Equal(5, PillLayout.EffectiveLift(s, 60, 1.25));   // whatever the pill leaves of the 60 px bar
+        s.Apps.Height = 36; s.Tray.Height = 36;
+        Assert.Equal(15, PillLayout.EffectiveLift(s, 60, 1.25));
+    }
+
     [Theory]
     [InlineData(TaskbarEdge.Left)]
     [InlineData(TaskbarEdge.Right)]
